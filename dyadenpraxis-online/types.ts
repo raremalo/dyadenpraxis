@@ -18,10 +18,11 @@ export enum DyadRole {
 }
 
 export interface DyadConfig {
-  durationMinutes: number;
-  contemplationMinutes: number;
-  switchIntervalMinutes: number;
-  rounds: number;
+  durationMinutes: number;       // Dauer pro Durchgang (Sprechen/Zuhören)
+  contemplationMinutes: number;  // Kontemplationszeit
+  transitionSeconds: number;     // Wechselpause in Sekunden (0, 10, 20, 30)
+  rounds: number;                // Anzahl Runden (1 Runde = 1× Sprechen + 1× Zuhören)
+  soundUrl: string;              // Gewählter Klang-URL
 }
 
 // --- Gong Timer Types ---

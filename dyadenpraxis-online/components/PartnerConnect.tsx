@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Loader2, User, CheckCircle2, Search, X, Clock, 
-  Zap, ChevronRight, Users, AlertCircle, RefreshCw 
+import {
+  Loader2, User, CheckCircle2, Search, X, Clock,
+  ChevronRight, Users, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
@@ -33,7 +33,6 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
 
   const [phase, setPhase] = useState<Phase>(preselected ? 'configuring' : 'searching');
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(preselected || null);
-  const [sessionLevel, setSessionLevel] = useState(1);
   const [sessionDuration, setSessionDuration] = useState(40);
 
   // Filter online partners from recommendations
@@ -81,7 +80,7 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
     setPhase('requesting');
     const success = await requestSession(
       selectedPartner.id,
-      sessionLevel,
+      1,
       sessionDuration
     );
     
@@ -248,28 +247,6 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
 
           {/* Session Config */}
           <div className="bg-[var(--c-bg-card)] rounded-2xl p-6 space-y-6 border border-[var(--c-border)]">
-            {/* Level Selection */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--c-text-muted)] mb-3">
-                Level
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3].map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => setSessionLevel(level)}
-                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${
-                      sessionLevel === level
-                        ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
-                        : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Duration Selection */}
             <div>
               <label className="block text-sm font-medium text-[var(--c-text-muted)] mb-3">
@@ -362,11 +339,6 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
                 : (t.partner?.waitingText || 'Anfrage wurde gesendet')}
             </p>
             <div className="flex items-center justify-center gap-4 text-sm text-[var(--c-text-muted)] mt-4">
-              <span className="flex items-center gap-1">
-                <Zap className="w-4 h-4" />
-                Level {sessionLevel}
-              </span>
-              <span>•</span>
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 {sessionDuration} min
