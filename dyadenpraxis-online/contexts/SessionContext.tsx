@@ -10,7 +10,7 @@ interface SessionContextType {
   isRequester: boolean;
   isThirdParticipant: boolean;
   openTriads: OpenTriad[];
-  
+
   // Session Actions
   requestSession: (partnerId: string, level: number, duration: number, isOpen?: boolean) => Promise<boolean>;
   acceptInvite: (sessionId: string) => Promise<boolean>;
@@ -19,12 +19,13 @@ interface SessionContextType {
   cancelCurrentSession: () => Promise<void>;
   joinTriad: (sessionId: string) => Promise<boolean>;
   refreshTriads: () => Promise<void>;
-  
+  refreshSessions: () => Promise<void>;
+
   // Video State
   isVideoReady: boolean;
   videoRoomUrl: string | null;
   videoToken: string | null;
-  
+
   // Loading/Error
   isLoading: boolean;
   error: string | null;
@@ -183,6 +184,10 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     await loadOpenTriads();
   }, [loadOpenTriads]);
 
+  const refreshSessions = useCallback(async () => {
+    await loadSessions();
+  }, [loadSessions]);
+
   return (
     <SessionContext.Provider value={{
       currentSession,
@@ -197,6 +202,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
       cancelCurrentSession,
       joinTriad,
       refreshTriads,
+      refreshSessions,
       isVideoReady: !!videoRoomUrl && !!videoToken,
       videoRoomUrl,
       videoToken,

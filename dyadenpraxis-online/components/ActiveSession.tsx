@@ -22,6 +22,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     startVideoSession,
     endSession,
     cancelCurrentSession,
+    refreshSessions,
     isVideoReady,
     videoRoomUrl,
     videoToken,
@@ -66,6 +67,17 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
       setShowVideo(true);
     }
   }, [isVideoReady, currentSession?.status]);
+
+  // Polling-Fallback: Sessions alle 4s neu laden solange auf Status-Wechsel gewartet wird
+  // (pending → accepted, accepted → active)
+  useEffect(() => {
+    if (!currentSession) return;
+    if (currentSession.status === 'active' && showVideo) return; // Video laeuft, kein Polling noetig
+    const interval = setInterval(() => {
+      refreshSessions();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [currentSession, currentSession?.status, showVideo, refreshSessions]);
 
   const handleStartSession = async () => {
     if (isRequester) {
