@@ -1,90 +1,135 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle } from 'lucide-react';
-import { useVideoCall } from '../hooks/useVideoCall';
+import {
+  DailyProvider,
+  DailyAudio,
+  DailyVideo,
+  useDaily,
+  useLocalSessionId,
+  useParticipantIds,
+  useMeetingState,
+  useDailyEvent,
+  useDailyError,
+} from '@daily-co/daily-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 interface VideoRoomProps {
   sessionId: string;
   role: 'requester' | 'partner' | 'third';
-  roomUrl?: string;
-  meetingToken?: string;
+  roomUrl: string;
+  meetingToken: string;
   onLeave?: () => void;
   onError?: (error: string) => void;
 }
 
+/**
+ * VideoRoom: Wrapper mit DailyProvider.
+ * roomUrl und meetingToken kommen aus SessionContext (via ActiveSession Props).
+ * KEIN createRoom() — Room wurde bereits in SessionContext.startVideoSession() erstellt.
+ */
 const VideoRoom: React.FC<VideoRoomProps> = ({
-  sessionId,
-  role,
-  roomUrl: providedRoomUrl,
-  meetingToken: providedToken,
+  roomUrl,
+  meetingToken,
   onLeave,
   onError,
 }) => {
-  const { t } = useSettings();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
-  const [roomData, setRoomData] = useState<{ roomUrl: string; token: string } | null>(
-    providedRoomUrl && providedToken ? { roomUrl: providedRoomUrl, token: providedToken } : null
+  return (
+    <DailyProvider url={roomUrl} token={meetingToken}>
+      <VideoUI onLeave={onLeave} onError={onError} />
+      <DailyAudio />
+    </DailyProvider>
   );
-  const [createFailed, setCreateFailed] = useState(false);
+};
 
-  const {
-    isJoined,
-    isLoading,
-    error,
-    participants,
-    createRoom,
-    joinCall,
-    leaveCall,
-    checkMediaPermissions,
-    toggleAudio,
-    toggleVideo,
-    isAudioEnabled,
-    isVideoEnabled,
-  } = useVideoCall({
-    onLeft: onLeave,
-    onError,
-  });
+// ---- Innere Komponente: hat Zugriff auf Daily-Hooks ----
 
-  // Check permissions on mount
+interface VideoUIProps {
+  onLeave?: () => void;
+  onError?: (error: string) => void;
+}
+
+const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
+  const { t } = useSettings();
+  const daily = useDaily();
+  const meetingState = useMeetingState();
+  const localSessionId = useLocalSessionId();
+  const remoteParticipantIds = useParticipantIds({ filter: 'remote' });
+  const { meetingError } = useDailyError();
+
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [callError, setCallError] = useState<string | null>(null);
+
+  // Check media permissions before joining
   useEffect(() => {
-    checkMediaPermissions().then(setPermissionGranted);
-  }, [checkMediaPermissions]);
+    navigator.mediaDevices
+      .getUserMedia({ audio: true, video: true })
+      .then((stream) => {
+        stream.getTracks().forEach((t) => t.stop());
+        setPermissionGranted(true);
+      })
+      .catch(() => setPermissionGranted(false));
+  }, []);
 
-  // Create room and get tokens
+  // Auto-join when permissions granted and daily is ready
   useEffect(() => {
-    if (permissionGranted && !roomData && !isLoading && !createFailed) {
-      createRoom(sessionId, role === 'third').then((data) => {
-        if (data) {
-          const token = role === 'requester'
-            ? data.tokens.requester
-            : role === 'partner'
-            ? data.tokens.partner
-            : data.tokens.third;
-
-          if (token) {
-            setRoomData({ roomUrl: data.roomUrl, token });
-          }
-        } else {
-          setCreateFailed(true);
-        }
+    if (permissionGranted && daily && meetingState === 'new') {
+      daily.join().catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Beitritt fehlgeschlagen';
+        setCallError(msg);
+        onError?.(msg);
       });
     }
-  }, [permissionGranted, roomData, isLoading, createFailed, sessionId, role, createRoom]);
+  }, [permissionGranted, daily, meetingState, onError]);
 
-  // Join call when room data is ready
+  // Handle meeting errors
   useEffect(() => {
-    if (roomData && containerRef.current && !isJoined && !isLoading) {
-      joinCall(roomData.roomUrl, roomData.token, containerRef.current);
+    if (meetingError) {
+      const msg = meetingError.errorMsg || 'Video-Call Fehler';
+      setCallError(msg);
+      onError?.(msg);
     }
-  }, [roomData, isJoined, isLoading, joinCall]);
+  }, [meetingError, onError]);
 
-  const handleLeave = () => {
-    leaveCall();
+  // Handle left-meeting event
+  const handleLeftMeeting = useCallback(() => {
     onLeave?.();
-  };
+  }, [onLeave]);
 
-  // Permission check screen
+  useDailyEvent('left-meeting', handleLeftMeeting);
+
+  // Handle fatal error event
+  const handleError = useCallback((ev: { errorMsg?: string }) => {
+    const msg = ev?.errorMsg || 'Video-Call Fehler';
+    setCallError(msg);
+    onError?.(msg);
+  }, [onError]);
+
+  useDailyEvent('error', handleError);
+
+  const handleLeave = useCallback(() => {
+    daily?.leave();
+    onLeave?.();
+  }, [daily, onLeave]);
+
+  const toggleAudio = useCallback(() => {
+    if (daily) {
+      const newState = !isAudioEnabled;
+      daily.setLocalAudio(newState);
+      setIsAudioEnabled(newState);
+    }
+  }, [daily, isAudioEnabled]);
+
+  const toggleVideo = useCallback(() => {
+    if (daily) {
+      const newState = !isVideoEnabled;
+      daily.setLocalVideo(newState);
+      setIsVideoEnabled(newState);
+    }
+  }, [daily, isVideoEnabled]);
+
+  // Permission checking
   if (permissionGranted === null) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
@@ -104,7 +149,15 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
           {t.video?.permissionDeniedText || 'Bitte erlaube den Zugriff auf Kamera und Mikrofon in deinen Browser-Einstellungen.'}
         </p>
         <button
-          onClick={() => checkMediaPermissions().then(setPermissionGranted)}
+          onClick={() => {
+            navigator.mediaDevices
+              .getUserMedia({ audio: true, video: true })
+              .then((stream) => {
+                stream.getTracks().forEach((t) => t.stop());
+                setPermissionGranted(true);
+              })
+              .catch(() => setPermissionGranted(false));
+          }}
           className="mt-4 px-4 py-2 bg-[var(--c-accent)] text-[var(--c-accent-fg)] rounded-xl text-sm font-medium"
         >
           {t.video?.retry || 'Erneut versuchen'}
@@ -114,12 +167,12 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
   }
 
   // Error state
-  if (error) {
+  if (callError) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
         <AlertCircle className="w-12 h-12 text-rose-500 mb-4" />
         <h3 className="text-lg font-medium mb-2">{t.video?.error || 'Fehler'}</h3>
-        <p className="text-[var(--c-text-muted)] text-center text-sm max-w-xs">{error}</p>
+        <p className="text-[var(--c-text-muted)] text-center text-sm max-w-xs">{callError}</p>
         <button
           onClick={handleLeave}
           className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-medium"
@@ -130,8 +183,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
     );
   }
 
-  // Loading state
-  if (isLoading || !isJoined) {
+  // Loading / connecting
+  if (meetingState !== 'joined-meeting') {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
         <Loader2 className="w-8 h-8 text-[var(--c-accent)] animate-spin mb-4" />
@@ -140,16 +193,42 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
     );
   }
 
+  // Joined — show video tiles
+  const allParticipantIds = localSessionId
+    ? [localSessionId, ...remoteParticipantIds]
+    : remoteParticipantIds;
+
   return (
     <div className="flex flex-col h-full bg-[var(--c-bg-card)] rounded-2xl overflow-hidden">
-      {/* Video Container */}
-      <div ref={containerRef} className="flex-1 min-h-0" />
+      {/* Video Grid */}
+      <div className={`flex-1 min-h-0 grid gap-2 p-2 ${
+        allParticipantIds.length <= 1 ? 'grid-cols-1' :
+        allParticipantIds.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+        'grid-cols-2'
+      }`}>
+        {allParticipantIds.map((id) => (
+          <div key={id} className="relative rounded-xl overflow-hidden bg-black">
+            <DailyVideo
+              sessionId={id}
+              type="video"
+              automirror
+              fit="cover"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            {id === localSessionId && (
+              <span className="absolute bottom-2 left-2 text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">
+                Du
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* Controls */}
       <div className="flex items-center justify-center gap-4 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
         {/* Participants count */}
         <span className="text-sm text-[var(--c-text-muted)] mr-auto">
-          {participants.length} {t.video?.participants || 'Teilnehmer'}
+          {allParticipantIds.length} {t.video?.participants || 'Teilnehmer'}
         </span>
 
         {/* Audio toggle */}
