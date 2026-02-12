@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Loader2, Play, X, Clock, User, Video, Users, Timer } from 'lucide-react';
+import { Loader2, Play, X, Clock, User, Video, Users } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -272,17 +272,9 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
             roomUrl={videoRoomUrl}
             meetingToken={videoToken}
             onLeave={handleEndSession}
+            onTimerToggle={() => setShowTimer(true)}
           />
         </div>
-
-        {/* Timer Toggle */}
-        <button
-          onClick={() => setShowTimer(true)}
-          className="fixed bottom-6 right-6 z-30 p-4 bg-[var(--c-accent)] text-[var(--c-accent-fg)] rounded-full shadow-lg hover:opacity-90 transition-opacity"
-          title={t.timer?.label || 'Timer starten'}
-        >
-          <Timer className="w-6 h-6" />
-        </button>
 
         {/* DyadTimer Overlay */}
         {showTimer && sessionPrompt && (

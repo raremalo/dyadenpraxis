@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer } from 'lucide-react';
 import {
   DailyProvider,
   DailyAudio,
@@ -20,6 +20,7 @@ interface VideoRoomProps {
   meetingToken: string;
   onLeave?: () => void;
   onError?: (error: string) => void;
+  onTimerToggle?: () => void;
 }
 
 /**
@@ -32,10 +33,11 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
   meetingToken,
   onLeave,
   onError,
+  onTimerToggle,
 }) => {
   return (
     <DailyProvider url={roomUrl} token={meetingToken}>
-      <VideoUI onLeave={onLeave} onError={onError} />
+      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} />
       <DailyAudio />
     </DailyProvider>
   );
@@ -46,9 +48,10 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
 interface VideoUIProps {
   onLeave?: () => void;
   onError?: (error: string) => void;
+  onTimerToggle?: () => void;
 }
 
-const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
+const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) => {
   const { t } = useSettings();
   const daily = useDaily();
   const meetingState = useMeetingState();
@@ -56,9 +59,11 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
   const remoteParticipantIds = useParticipantIds({ filter: 'remote' });
   const { meetingError } = useDailyError();
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
 
   // Check media permissions before joining
@@ -128,6 +133,28 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
       setIsVideoEnabled(newState);
     }
   }, [daily, isVideoEnabled]);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.warn('[VideoRoom] Fullscreen error:', err);
+    }
+  }, []);
+
+  // Listen for fullscreen changes (also triggered by Escape key)
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   // Permission checking
   if (permissionGranted === null) {
@@ -199,7 +226,12 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
     : remoteParticipantIds;
 
   return (
-    <div className="flex flex-col h-full bg-[var(--c-bg-card)] rounded-2xl overflow-hidden">
+    <div
+      ref={containerRef}
+      className={`flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden ${
+        isFullscreen ? 'rounded-none' : 'rounded-2xl'
+      }`}
+    >
       {/* Video Grid */}
       <div className={`flex-1 min-h-0 grid gap-2 p-2 ${
         allParticipantIds.length <= 1 ? 'grid-cols-1' :
@@ -225,11 +257,22 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-center gap-4 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
+      <div className="flex items-center justify-center gap-3 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
         {/* Participants count */}
         <span className="text-sm text-[var(--c-text-muted)] mr-auto">
           {allParticipantIds.length} {t.video?.participants || 'Teilnehmer'}
         </span>
+
+        {/* Timer/Gong toggle */}
+        {onTimerToggle && (
+          <button
+            onClick={onTimerToggle}
+            className="p-3 rounded-full bg-[var(--c-accent)]/15 text-[var(--c-accent)] hover:bg-[var(--c-accent)]/25 transition-colors"
+            title={t.timer?.label || 'Intervall-Gong'}
+          >
+            <Timer className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Audio toggle */}
         <button
@@ -255,6 +298,15 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError }) => {
           title={isVideoEnabled ? (t.video?.disableVideo || 'Video deaktivieren') : (t.video?.enableVideo || 'Video aktivieren')}
         >
           {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+        </button>
+
+        {/* Fullscreen toggle */}
+        <button
+          onClick={toggleFullscreen}
+          className="p-3 rounded-full bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)] transition-colors"
+          title={isFullscreen ? (t.video?.exitFullscreen || 'Vollbild beenden') : (t.video?.fullscreen || 'Vollbild')}
+        >
+          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
         </button>
 
         {/* Leave call */}
