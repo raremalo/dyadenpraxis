@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer, Settings, EyeOff, Eye } from 'lucide-react';
+import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer, Settings, EyeOff, Eye, X } from 'lucide-react';
 import {
   DailyProvider,
   DailyAudio,
@@ -62,6 +62,8 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
   const { meetingError } = useDailyError();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const settingsPanelRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -206,6 +208,23 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
+  // Click-outside handler for settings panel
+  useEffect(() => {
+    if (!showSettings) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        settingsPanelRef.current &&
+        !settingsPanelRef.current.contains(e.target as Node) &&
+        settingsButtonRef.current &&
+        !settingsButtonRef.current.contains(e.target as Node)
+      ) {
+        setShowSettings(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettings]);
+
   // Permission checking
   if (permissionGranted === null) {
     return (
@@ -308,8 +327,13 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
 
       {/* Settings Panel (overlay above controls) */}
       {showSettings && (
-        <div className="absolute bottom-20 left-4 right-4 bg-[var(--c-bg-card)] rounded-2xl border border-[var(--c-border)] shadow-xl p-5 space-y-5 z-20 max-h-[60vh] overflow-y-auto">
-          <h4 className="text-sm font-medium text-[var(--c-text-main)] uppercase tracking-widest">{t.video?.settings || 'Einstellungen'}</h4>
+        <div ref={settingsPanelRef} className="absolute bottom-20 left-4 right-4 bg-[var(--c-bg-card)] rounded-2xl border border-[var(--c-border)] shadow-xl p-5 space-y-5 z-20 max-h-[60vh] overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-[var(--c-text-main)] uppercase tracking-widest">{t.video?.settings || 'Einstellungen'}</h4>
+            <button onClick={() => setShowSettings(false)} className="p-1 rounded-lg hover:bg-[var(--c-bg-app)] transition-colors">
+              <X className="w-4 h-4 text-[var(--c-text-muted)]" />
+            </button>
+          </div>
 
           {/* Kamera-Auswahl */}
           {cameras.length > 0 && (
@@ -449,6 +473,7 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
 
         {/* Settings toggle */}
         <button
+          ref={settingsButtonRef}
           onClick={() => setShowSettings(!showSettings)}
           className={`p-3 rounded-full transition-colors ${
             showSettings

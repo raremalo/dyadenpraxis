@@ -68,16 +68,15 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     }
   }, [isVideoReady, currentSession?.status]);
 
-  // Polling-Fallback: Sessions alle 4s neu laden solange auf Status-Wechsel gewartet wird
-  // (pending → accepted, accepted → active)
+  // Polling-Fallback: Sessions alle 5s neu laden (auch bei aktivem Video,
+  // damit Partner erkennt wenn Requester Session beendet hat)
   useEffect(() => {
     if (!currentSession) return;
-    if (currentSession.status === 'active' && showVideo) return; // Video laeuft, kein Polling noetig
     const interval = setInterval(() => {
       refreshSessions();
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [currentSession, currentSession?.status, showVideo, refreshSessions]);
+  }, [currentSession, refreshSessions]);
 
   const handleStartSession = async () => {
     if (isRequester) {
@@ -139,7 +138,6 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
               <Clock className="w-4 h-4" />
               {currentSession.duration} min
             </span>
-            <span>Level {currentSession.level}</span>
           </div>
 
           <button
@@ -186,7 +184,6 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
               <Clock className="w-4 h-4" />
               {currentSession.duration} min
             </span>
-            <span>Level {currentSession.level}</span>
             {isTriad && (
               <span className="flex items-center gap-1 text-[var(--c-accent)]">
                 <Users className="w-4 h-4" />
@@ -263,7 +260,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
                 ) : partner?.name}
               </h3>
               <span className="text-xs text-[var(--c-text-muted)]">
-                Level {currentSession.level} • {currentSession.duration} min
+                {currentSession.duration} min
               </span>
             </div>
           </div>
@@ -293,6 +290,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
           <DyadTimer
             onExit={() => setShowTimer(false)}
             prompt={sessionPrompt}
+            sessionDuration={currentSession.duration}
           />
         )}
       </div>
