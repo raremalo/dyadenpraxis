@@ -41,13 +41,22 @@ export function useVideoCall(): UseVideoCallReturn {
       });
 
       if (fnError) {
-        // Bei 401: Session ungueltig → automatisch ausloggen
         const status = (fnError as { context?: { status?: number } }).context?.status;
         if (status === 401) {
-          console.error('[VideoCall] Auth fehlgeschlagen (401), Session wird beendet');
-          await supabase.auth.signOut();
-          const authMsg = 'Sitzung abgelaufen. Bitte erneut anmelden.';
-          setError(authMsg);
+          // JWT abgelaufen — Token refreshen statt ausloggen
+          console.warn('[VideoCall] Auth 401 — versuche Token-Refresh');
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('[VideoCall] Token-Refresh fehlgeschlagen:', refreshError.message);
+            setError('Sitzung abgelaufen. Bitte Seite neu laden.');
+          } else {
+            setError('Bitte erneut versuchen.');
+          }
+          return null;
+        }
+        if (status === 403) {
+          console.error('[VideoCall] Nicht berechtigt (403):', fnError.message);
+          setError('Nur der Anfragende kann die Session starten.');
           return null;
         }
         throw new Error(fnError.message || 'Room-Erstellung fehlgeschlagen');
