@@ -120,13 +120,11 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt }) => {
 
   const getBgColor = () => {
     switch (currentRole) {
-      // Using Tailwind specific classes for the timer states as they are functional colors, 
-      // but modifying them to respect dark mode somewhat or keep their semantic meaning
-      case DyadRole.CONTEMPLATION: return "bg-[var(--c-bg-app)] text-[var(--c-text-main)]";
-      case DyadRole.SPEAKER: return "bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-100";
-      case DyadRole.LISTENER: return "bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100";
-      case DyadRole.COMPLETED: return "bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-100";
-      default: return "bg-[var(--c-bg-app)]";
+      case DyadRole.CONTEMPLATION: return "bg-black/30 text-white";
+      case DyadRole.SPEAKER: return "bg-orange-500/20 text-white";
+      case DyadRole.LISTENER: return "bg-blue-500/20 text-white";
+      case DyadRole.COMPLETED: return "bg-emerald-500/20 text-white";
+      default: return "bg-black/30 text-white";
     }
   };
 
@@ -141,20 +139,20 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt }) => {
   }
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-1000 ${getBgColor()}`}>
+    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-sm transition-colors duration-1000 ${getBgColor()}`}>
       
       {/* Top Bar */}
       <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center opacity-70 hover:opacity-100 transition-opacity">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium tracking-widest uppercase">Dyadenpraxis</span>
         </div>
-        <button onClick={onExit} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+        <button onClick={onExit} className="p-2 rounded-full hover:bg-white/10 transition-colors">
           <X className="w-6 h-6" />
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center text-center max-w-xl px-8 fade-in">
+      <div className="flex flex-col items-center text-center max-w-xl px-8 fade-in" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
         
         {/* Role Indicator */}
         <div className="mb-8">
@@ -183,12 +181,12 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt }) => {
         <div className="flex items-center gap-6">
           <button 
             onClick={() => setIsActive(!isActive)}
-            className="p-4 rounded-full border border-current hover:bg-black/5 dark:hover:bg-white/10 transition-all"
+            className="p-4 rounded-full border border-current hover:bg-white/10 transition-all"
           >
             {isActive ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
           </button>
           
-          <button onClick={playBell} className="p-4 rounded-full border border-current hover:bg-black/5 dark:hover:bg-white/10 transition-all opacity-50 hover:opacity-100">
+          <button onClick={playBell} className="p-4 rounded-full border border-current hover:bg-white/10 transition-all opacity-50 hover:opacity-100">
              <Volume2 className="w-6 h-6" />
           </button>
         </div>
@@ -215,7 +213,7 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt }) => {
       </div>
 
       {/* Progress Bar */}
-      <div className="absolute bottom-0 left-0 h-1 bg-current opacity-20 transition-all duration-1000 ease-linear" 
+      <div className="absolute bottom-0 left-0 h-1 bg-white/40 transition-all duration-1000 ease-linear" 
            style={{ width: `${currentRole === DyadRole.COMPLETED ? 100 : ((config.switchIntervalMinutes * 60 - timeLeft) / (config.switchIntervalMinutes * 60)) * 100}%` }} 
       />
     </div>
