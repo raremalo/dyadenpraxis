@@ -28,6 +28,22 @@ export function useVideoCall(): UseVideoCallReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const invokeCreateRoom = useCallback(async (
+    sessionId: string,
+    includeThird: boolean
+  ): Promise<{ data: CreateRoomResponse | null; status?: number; errorMsg?: string }> => {
+    const { data, error: fnError } = await supabase.functions.invoke('create-room', {
+      body: { sessionId, includeThird },
+    });
+
+    if (fnError) {
+      const status = (fnError as { context?: { status?: number } }).context?.status;
+      return { data: null, status, errorMsg: fnError.message };
+    }
+
+    return { data: data as CreateRoomResponse };
+  }, []);
+
   const createRoom = useCallback(async (
     sessionId: string,
     includeThird = false
@@ -36,33 +52,36 @@ export function useVideoCall(): UseVideoCallReturn {
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('create-room', {
-        body: { sessionId, includeThird },
-      });
+      // Erster Versuch
+      let result = await invokeCreateRoom(sessionId, includeThird);
 
-      if (fnError) {
-        const status = (fnError as { context?: { status?: number } }).context?.status;
-        if (status === 401) {
-          // JWT abgelaufen — Token refreshen statt ausloggen
-          console.warn('[VideoCall] Auth 401 — versuche Token-Refresh');
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.error('[VideoCall] Token-Refresh fehlgeschlagen:', refreshError.message);
-            setError('Sitzung abgelaufen. Bitte Seite neu laden.');
-          } else {
-            setError('Bitte erneut versuchen.');
-          }
+      // Bei 401: Token refreshen und automatisch nochmal versuchen
+      if (result.status === 401) {
+        console.warn('[VideoCall] Auth 401 — versuche Token-Refresh + Retry');
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('[VideoCall] Token-Refresh fehlgeschlagen:', refreshError.message);
+          setError('Sitzung abgelaufen. Bitte Seite neu laden.');
           return null;
         }
-        if (status === 403) {
-          console.error('[VideoCall] Nicht berechtigt (403):', fnError.message);
-          setError('Nur der Anfragende kann die Session starten.');
-          return null;
-        }
-        throw new Error(fnError.message || 'Room-Erstellung fehlgeschlagen');
+        // Retry mit neuem Token
+        result = await invokeCreateRoom(sessionId, includeThird);
       }
 
-      return data as CreateRoomResponse;
+      if (result.status === 401) {
+        setError('Sitzung abgelaufen. Bitte Seite neu laden.');
+        return null;
+      }
+      if (result.status === 403) {
+        console.error('[VideoCall] Nicht berechtigt (403):', result.errorMsg);
+        setError('Nur der Anfragende kann die Session starten.');
+        return null;
+      }
+      if (!result.data) {
+        throw new Error(result.errorMsg || 'Room-Erstellung fehlgeschlagen');
+      }
+
+      return result.data;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Room-Erstellung fehlgeschlagen';
       setError(msg);
@@ -70,7 +89,7 @@ export function useVideoCall(): UseVideoCallReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [invokeCreateRoom]);
 
   const checkMediaPermissions = useCallback(async (): Promise<boolean> => {
     try {

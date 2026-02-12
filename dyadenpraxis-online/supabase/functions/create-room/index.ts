@@ -24,9 +24,12 @@ Deno.serve(async (req: Request) => {
   try {
     // 1. Auth: JWT aus Header validieren
     const authHeader = req.headers.get("Authorization");
+    console.log("[create-room] Request erhalten, Auth header:", !!authHeader);
+
     if (!authHeader) {
+      console.error("[create-room] Kein Authorization Header vorhanden");
       return new Response(
-        JSON.stringify({ error: "Nicht autorisiert" }),
+        JSON.stringify({ error: "Nicht autorisiert", detail: "missing_auth_header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -37,11 +40,13 @@ Deno.serve(async (req: Request) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      console.error("[create-room] JWT ungueltig:", authError?.message);
       return new Response(
-        JSON.stringify({ error: "Ungültiger Token" }),
+        JSON.stringify({ error: "Ungültiger Token", detail: authError?.message || "no_user" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    console.log("[create-room] User:", user.id, "validiert");
 
     // 2. Request Body lesen
     const { sessionId, includeThird = false }: RequestBody = await req.json();
