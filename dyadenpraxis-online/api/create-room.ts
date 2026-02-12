@@ -3,7 +3,8 @@ import { jwtVerify, createRemoteJWKSet } from 'jose';
 
 // CORS Konfiguration
 const ALLOWED_ORIGINS = [
-  'https://connect.ehrlichesmitteilen.org',
+  'https://dyadenpraxis.de',
+  'https://www.dyadenpraxis.de',
   /^https:\/\/.*\.vercel\.app$/,
   /^http:\/\/localhost:\d+$/,
 ];
