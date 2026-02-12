@@ -69,7 +69,7 @@ GRANT EXECUTE ON FUNCTION search_partners_fuzzy TO authenticated;
 CREATE OR REPLACE FUNCTION get_recommended_partners(p_user_id UUID, lim INT DEFAULT 6)
 RETURNS TABLE (
   id UUID, name TEXT, avatar_url TEXT, bio TEXT, trust_level trust_level,
-  confirmations INT, is_online BOOLEAN, preferred_levels INT[],
+  confirmations INT, is_online BOOLEAN, is_available BOOLEAN, preferred_levels INT[],
   preferred_duration INT, sessions_completed INT, compliance_rate NUMERIC,
   em_experience_months INT, updated_at TIMESTAMPTZ,
   match_score NUMERIC, match_reasons TEXT[]
@@ -86,7 +86,7 @@ BEGIN
 
   RETURN QUERY
   SELECT p.id, p.name, p.avatar_url, p.bio, p.trust_level,
-    p.confirmations, p.is_online, p.preferred_levels,
+    p.confirmations, p.is_online, p.is_available, p.preferred_levels,
     p.preferred_duration, p.sessions_completed, p.compliance_rate,
     p.em_experience_months, p.updated_at,
     (
@@ -119,7 +119,7 @@ GRANT EXECUTE ON FUNCTION get_recommended_partners TO authenticated;
 CREATE OR REPLACE FUNCTION get_recent_partners(p_user_id UUID, lim INT DEFAULT 6)
 RETURNS TABLE (
   id UUID, name TEXT, avatar_url TEXT, bio TEXT, trust_level trust_level,
-  confirmations INT, is_online BOOLEAN, preferred_levels INT[],
+  confirmations INT, is_online BOOLEAN, is_available BOOLEAN, preferred_levels INT[],
   preferred_duration INT, sessions_completed INT, compliance_rate NUMERIC,
   updated_at TIMESTAMPTZ, last_session_at TIMESTAMPTZ
 )
@@ -127,7 +127,7 @@ AS $$
 BEGIN
   RETURN QUERY
   SELECT DISTINCT ON (partner.id) partner.id, partner.name, partner.avatar_url, partner.bio,
-    partner.trust_level, partner.confirmations, partner.is_online,
+    partner.trust_level, partner.confirmations, partner.is_online, partner.is_available,
     partner.preferred_levels, partner.preferred_duration, partner.sessions_completed,
     partner.compliance_rate, partner.updated_at, s.created_at AS last_session_at
   FROM sessions s
