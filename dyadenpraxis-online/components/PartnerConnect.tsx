@@ -20,11 +20,12 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
   const { t } = useSettings();
   const { user, onlineUserIds } = useAuth();
   const { recommended, loadRecommended, isLoading: searchLoading } = usePartnerSearch();
-  const { 
-    requestSession, 
-    currentSession, 
+  const {
+    requestSession,
+    currentSession,
+    refreshSessions,
     isLoading: sessionLoading,
-    error: sessionError 
+    error: sessionError
   } = useSessionContext();
   const location = useLocation();
 
@@ -51,7 +52,7 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
     return () => clearTimeout(timer);
   }, [loadRecommended, preselected]);
 
-  // Watch for session status changes
+  // Watch for session status changes (Realtime-triggered)
   useEffect(() => {
     if (currentSession) {
       if (currentSession.status === 'accepted' || currentSession.status === 'active') {
@@ -59,6 +60,15 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
       }
     }
   }, [currentSession, onConnected]);
+
+  // Polling-Fallback: Sessions alle 4s neu laden falls Realtime nicht feuert
+  useEffect(() => {
+    if (phase !== 'waiting') return;
+    const interval = setInterval(() => {
+      refreshSessions();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [phase, refreshSessions]);
 
   const handleSelectPartner = (partner: Partner) => {
     setSelectedPartner(partner);
