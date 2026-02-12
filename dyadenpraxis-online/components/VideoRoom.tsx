@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer } from 'lucide-react';
+import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer, Settings, EyeOff, Eye } from 'lucide-react';
 import {
   DailyProvider,
   DailyAudio,
@@ -10,6 +10,8 @@ import {
   useMeetingState,
   useDailyEvent,
   useDailyError,
+  useInputSettings,
+  useDevices,
 } from '@daily-co/daily-react';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -64,7 +66,19 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [hideSelf, setHideSelf] = useState(false);
+  const [noiseCancellation, setNoiseCancellation] = useState(false);
+  const [bgEffect, setBgEffect] = useState<'none' | 'blur'>('none');
   const [callError, setCallError] = useState<string | null>(null);
+
+  // Daily.co device & input settings hooks
+  const { updateInputSettings } = useInputSettings();
+  const {
+    cameras, microphones, speakers,
+    currentCam, currentMic, currentSpeaker,
+    setCamera, setMicrophone, setSpeaker,
+  } = useDevices();
 
   // Check media permissions before joining
   useEffect(() => {
@@ -133,6 +147,42 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
       setIsVideoEnabled(newState);
     }
   }, [daily, isVideoEnabled]);
+
+  const toggleNoiseCancellation = useCallback(async () => {
+    const newState = !noiseCancellation;
+    try {
+      await updateInputSettings({
+        audio: {
+          processor: { type: newState ? 'noise-cancellation' : 'none' },
+        },
+      });
+      setNoiseCancellation(newState);
+    } catch (err) {
+      console.warn('[VideoRoom] Noise cancellation error:', err);
+    }
+  }, [noiseCancellation, updateInputSettings]);
+
+  const toggleBackgroundBlur = useCallback(async () => {
+    const newEffect = bgEffect === 'blur' ? 'none' : 'blur';
+    try {
+      if (newEffect === 'blur') {
+        await updateInputSettings({
+          video: {
+            processor: { type: 'background-blur', config: { strength: 0.5 } },
+          },
+        });
+      } else {
+        await updateInputSettings({
+          video: {
+            processor: { type: 'none' },
+          },
+        });
+      }
+      setBgEffect(newEffect);
+    } catch (err) {
+      console.warn('[VideoRoom] Background blur error:', err);
+    }
+  }, [bgEffect, updateInputSettings]);
 
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
@@ -221,14 +271,14 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
   }
 
   // Joined — show video tiles
-  const allParticipantIds = localSessionId
+  const allParticipantIds = localSessionId && !hideSelf
     ? [localSessionId, ...remoteParticipantIds]
     : remoteParticipantIds;
 
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden ${
+      className={`relative flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden ${
         isFullscreen ? 'rounded-none' : 'rounded-2xl'
       }`}
     >
@@ -256,6 +306,129 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
         ))}
       </div>
 
+      {/* Settings Panel (overlay above controls) */}
+      {showSettings && (
+        <div className="absolute bottom-20 left-4 right-4 bg-[var(--c-bg-card)] rounded-2xl border border-[var(--c-border)] shadow-xl p-5 space-y-5 z-20 max-h-[60vh] overflow-y-auto">
+          <h4 className="text-sm font-medium text-[var(--c-text-main)] uppercase tracking-widest">{t.video?.settings || 'Einstellungen'}</h4>
+
+          {/* Kamera-Auswahl */}
+          {cameras.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.camera || 'Kamera'}</label>
+              <select
+                value={currentCam?.device?.deviceId || ''}
+                onChange={(e) => setCamera(e.target.value)}
+                className="w-full px-3 py-2 bg-[var(--c-bg-app)] text-[var(--c-text-main)] border border-[var(--c-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--c-accent)]"
+              >
+                {cameras.map((cam) => (
+                  <option key={cam.device.deviceId} value={cam.device.deviceId}>
+                    {cam.device.label || 'Kamera'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Mikrofon-Auswahl */}
+          {microphones.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.microphone || 'Mikrofon'}</label>
+              <select
+                value={currentMic?.device?.deviceId || ''}
+                onChange={(e) => setMicrophone(e.target.value)}
+                className="w-full px-3 py-2 bg-[var(--c-bg-app)] text-[var(--c-text-main)] border border-[var(--c-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--c-accent)]"
+              >
+                {microphones.map((mic) => (
+                  <option key={mic.device.deviceId} value={mic.device.deviceId}>
+                    {mic.device.label || 'Mikrofon'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Lautsprecher-Auswahl */}
+          {speakers.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.speaker || 'Lautsprecher'}</label>
+              <select
+                value={currentSpeaker?.device?.deviceId || ''}
+                onChange={(e) => setSpeaker(e.target.value)}
+                className="w-full px-3 py-2 bg-[var(--c-bg-app)] text-[var(--c-text-main)] border border-[var(--c-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--c-accent)]"
+              >
+                {speakers.map((spk) => (
+                  <option key={spk.device.deviceId} value={spk.device.deviceId}>
+                    {spk.device.label || 'Lautsprecher'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Hintergrund-Effekte */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.background || 'Hintergrund'}</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (bgEffect !== 'none') toggleBackgroundBlur();
+                }}
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  bgEffect === 'none'
+                    ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
+                    : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
+                }`}
+              >
+                {t.video?.bgNone || 'Keiner'}
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  bgEffect === 'blur'
+                    ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
+                    : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
+                }`}
+                onClick={() => {
+                  if (bgEffect !== 'blur') toggleBackgroundBlur();
+                }}
+              >
+                {t.video?.bgBlur || 'Blur'}
+              </button>
+            </div>
+          </div>
+
+          {/* Rauschunterdrueckung */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.noiseCancellation || 'Rauschunterdrueckung'}</label>
+            <button
+              onClick={toggleNoiseCancellation}
+              className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
+                noiseCancellation
+                  ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
+                  : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
+              }`}
+            >
+              {noiseCancellation ? (t.video?.ncOn || 'Aktiv') : (t.video?.ncOff || 'Aus')}
+            </button>
+          </div>
+
+          {/* Eigenes Video ausblenden */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.selfView || 'Eigenes Video'}</label>
+            <button
+              onClick={() => setHideSelf(!hideSelf)}
+              className={`w-full py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                hideSelf
+                  ? 'bg-rose-500/15 text-rose-500'
+                  : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
+              }`}
+            >
+              {hideSelf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {hideSelf ? (t.video?.selfHidden || 'Ausgeblendet') : (t.video?.selfVisible || 'Sichtbar')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex items-center justify-center gap-3 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
         {/* Participants count */}
@@ -273,6 +446,19 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
             <Timer className="w-5 h-5" />
           </button>
         )}
+
+        {/* Settings toggle */}
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          className={`p-3 rounded-full transition-colors ${
+            showSettings
+              ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
+              : 'bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)]'
+          }`}
+          title={t.video?.settings || 'Einstellungen'}
+        >
+          <Settings className="w-5 h-5" />
+        </button>
 
         {/* Audio toggle */}
         <button
