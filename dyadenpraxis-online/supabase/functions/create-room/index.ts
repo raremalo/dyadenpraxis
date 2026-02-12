@@ -169,24 +169,7 @@ Deno.serve(async (req: Request) => {
       thirdToken = await createToken(thirdProfile?.name || "Teilnehmer 3");
     }
 
-    // 6. Session in DB aktualisieren
-    const { error: updateError } = await supabase
-      .from("sessions")
-      .update({
-        room_url: roomUrl,
-        room_token: requesterToken,
-        partner_token: partnerToken,
-        third_participant_token: thirdToken,
-        status: "active",
-      })
-      .eq("id", sessionId);
-
-    if (updateError) {
-      console.error("Session-Update fehlgeschlagen:", updateError);
-      // Room wurde erstellt, aber DB-Update failed - trotzdem Tokens zurückgeben
-    }
-
-    // 7. Erfolg
+    // 6. Erfolg — DB-Update erfolgt clientseitig via startSession()
     return new Response(
       JSON.stringify({
         roomUrl,
