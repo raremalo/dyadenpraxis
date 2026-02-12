@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dyadenpraxis Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <style>
+      /* Theme Definitions via CSS Variables */
+      :root, body.theme-light {
+        --c-bg-app: #f8fafc;        /* Slate 50 */
+        --c-bg-card: #ffffff;       /* White */
+        --c-bg-card-hover: #f1f5f9; /* Slate 100 */
+        --c-text-main: #334155;     /* Slate 700 */
+        --c-text-muted: #64748b;    /* Slate 500 */
+        --c-accent: #0f172a;        /* Slate 900 */
+        --c-accent-fg: #ffffff;
+        --c-border: #e2e8f0;        /* Slate 200 */
+      }
+
+      body.theme-dark {
+        --c-bg-app: #0f172a;        /* Slate 900 */
+        --c-bg-card: #1e293b;       /* Slate 800 */
+        --c-bg-card-hover: #334155; /* Slate 700 */
+        --c-text-main: #e2e8f0;     /* Slate 200 */
+        --c-text-muted: #94a3b8;    /* Slate 400 */
+        --c-accent: #f8fafc;        /* Slate 50 */
+        --c-accent-fg: #0f172a;
+        --c-border: #334155;        /* Slate 700 */
+      }
+
+      body.theme-warm {
+        --c-bg-app: #fafaf9;        /* Stone 50 */
+        --c-bg-card: #ffffff;
+        --c-bg-card-hover: #f5f5f4; /* Stone 100 */
+        --c-text-main: #44403c;     /* Stone 700 */
+        --c-text-muted: #78716c;    /* Stone 500 */
+        --c-accent: #57534e;        /* Stone 600 */
+        --c-accent-fg: #ffffff;
+        --c-border: #e7e5e4;        /* Stone 200 */
+      }
+
+      body.theme-nature {
+        --c-bg-app: #f0fdf4;        /* Green 50 */
+        --c-bg-card: #ffffff;
+        --c-bg-card-hover: #dcfce7; /* Green 100 */
+        --c-text-main: #14532d;     /* Green 900 */
+        --c-text-muted: #15803d;    /* Green 700 */
+        --c-accent: #052e16;        /* Green 950 */
+        --c-accent-fg: #ffffff;
+        --c-border: #bbf7d0;        /* Green 200 */
+      }
+
+      body {
+        font-family: 'Outfit', sans-serif;
+        background-color: var(--c-bg-app);
+        color: var(--c-text-main);
+        transition: background-color 0.5s ease, color 0.5s ease;
+      }
+
+      h1, h2, h3, .serif {
+        font-family: 'Playfair Display', serif;
+      }
+      
+      /* Custom scrollbar for a cleaner look */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--c-border);
+        border-radius: 3px;
+      }
+      .fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

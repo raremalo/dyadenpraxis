@@ -1,0 +1,8 @@
+{
+  "name": "Dyadenpraxis Online",
+  "description": "Eine klare, ruhige und meditative Anwendung für die Dyaden-Praxis und achtsame Begegnungen.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
