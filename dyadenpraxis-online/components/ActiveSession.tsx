@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Loader2, Play, X, Clock, User, Video, Users } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Loader2, Play, X, Clock, User, Video, Users, AlertTriangle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,6 +34,15 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   const [showVideo, setShowVideo] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [sessionPrompt, setSessionPrompt] = useState('');
+  const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
+  const [showTimeWarning, setShowTimeWarning] = useState(false);
+
+  // Format remaining time as m:ss
+  const formatSessionTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   // Load prompt for DyadTimer
   useEffect(() => {
@@ -77,6 +86,44 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     }, 5000);
     return () => clearInterval(interval);
   }, [currentSession, refreshSessions]);
+
+  // Session-Countdown: berechnet aus started_at + duration + 2 min
+  // +2 min = 1 min Vorlauf (Begrüßung) + 1 min Nachlauf (Verabschiedung)
+  const handleAutoEnd = useCallback(async () => {
+    console.log('[ActiveSession] Auto-End: Session-Zeit abgelaufen');
+    await endSession();
+    onClose?.();
+  }, [endSession, onClose]);
+
+  useEffect(() => {
+    if (!currentSession?.started_at || currentSession.status !== 'active' || !showVideo) return;
+
+    const totalSeconds = (currentSession.duration + 2) * 60;
+    const startedAt = new Date(currentSession.started_at).getTime();
+
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      const remaining = totalSeconds - elapsed;
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        handleAutoEnd();
+      } else {
+        setSessionTimeLeft(remaining);
+        setShowTimeWarning(remaining <= 60);
+      }
+    }, 1000);
+
+    // Initial calculation
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    const remaining = totalSeconds - elapsed;
+    if (remaining > 0) {
+      setSessionTimeLeft(remaining);
+      setShowTimeWarning(remaining <= 60);
+    }
+
+    return () => clearInterval(interval);
+  }, [currentSession?.started_at, currentSession?.status, currentSession?.duration, showVideo, handleAutoEnd]);
 
   const handleStartSession = async () => {
     if (isRequester) {
@@ -261,6 +308,11 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
               </h3>
               <span className="text-xs text-[var(--c-text-muted)]">
                 {currentSession.duration} min
+                {sessionTimeLeft !== null && (
+                  <span className={showTimeWarning ? 'text-rose-400 animate-pulse ml-2 font-medium' : 'ml-2 opacity-60'}>
+                    {formatSessionTime(sessionTimeLeft)}
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -272,6 +324,24 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
             {t.session?.endSession || 'Beenden'}
           </button>
         </div>
+
+        {/* Time Warning Banner */}
+        {showTimeWarning && sessionTimeLeft !== null && (
+          <div className="mb-3 px-4 py-2.5 bg-rose-500/15 border border-rose-500/30 rounded-xl flex items-center justify-center gap-2 text-rose-400 text-sm font-medium animate-pulse">
+            <AlertTriangle className="w-4 h-4" />
+            {sessionTimeLeft <= 10
+              ? 'Sitzung endet...'
+              : `Noch ${formatSessionTime(sessionTimeLeft)} — Sitzung endet bald`}
+          </div>
+        )}
+
+        {/* 5 min warning (subtle) */}
+        {!showTimeWarning && sessionTimeLeft !== null && sessionTimeLeft <= 300 && (
+          <div className="mb-3 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center gap-2 text-amber-400/80 text-xs">
+            <Clock className="w-3.5 h-3.5" />
+            Noch {formatSessionTime(sessionTimeLeft)}
+          </div>
+        )}
 
         {/* Video */}
         <div className="h-[calc(100vh-200px)] min-h-[400px]">
