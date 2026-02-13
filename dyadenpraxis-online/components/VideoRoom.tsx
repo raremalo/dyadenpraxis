@@ -301,11 +301,11 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden transition-colors duration-700 ${
+      className={`relative flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden transition-shadow duration-700 ${
         isFullscreen ? 'rounded-none' : 'rounded-2xl'
       } ${
-        currentPhase === DyadRole.SPEAKER ? 'border-2 border-orange-500/40' :
-        currentPhase === DyadRole.LISTENER ? 'border-2 border-blue-500/40' :
+        currentPhase === DyadRole.SPEAKER ? 'shadow-[inset_0_0_0_4px_rgba(249,115,22,0.5)]' :
+        currentPhase === DyadRole.LISTENER ? 'shadow-[inset_0_0_0_4px_rgba(59,130,246,0.5)]' :
         ''
       }`}
     >

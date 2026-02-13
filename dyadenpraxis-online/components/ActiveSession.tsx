@@ -118,22 +118,27 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     return () => clearInterval(interval);
   }, [currentSession, refreshSessions]);
 
-  // Session-Countdown: berechnet aus started_at + duration + 2 min
-  // +2 min = 1 min Vorlauf (Begrüßung) + 1 min Nachlauf (Verabschiedung)
+  // Session-Countdown:
+  // MIT Timer: Timer-Dauer + 2 min Puffer ab Timer-Start
+  // OHNE Timer: gebuchte Dauer + 10 min ab session.started_at
   const handleAutoEnd = useCallback(async () => {
     console.log('[ActiveSession] Auto-End: Session-Zeit abgelaufen');
-    await endSession();
+    try {
+      await endSession();
+    } catch (err) {
+      console.error('[ActiveSession] Auto-End error:', err);
+    }
     onClose?.();
   }, [endSession, onClose]);
 
   useEffect(() => {
     if (!currentSession?.started_at || currentSession.status !== 'active' || !showVideo) return;
 
-    // If dyad timer is running, use timer duration + 2 min buffer
+    // Timer bestimmt Session-Dauer; ohne Timer: gebuchte Dauer + 10 min
     const totalSeconds = dyadTimer.isTimerRunning && dyadTimer.totalTimerSeconds > 0
       ? dyadTimer.totalTimerSeconds + 120
-      : (currentSession.duration + 2) * 60;
-    // Use timer start time if available, otherwise session start time
+      : (currentSession.duration + 10) * 60;
+    // Timer-Start oder Session-Start als Referenz
     const startedAt = timerStartedAtRef.current || new Date(currentSession.started_at).getTime();
 
     const interval = setInterval(() => {
@@ -145,7 +150,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
         handleAutoEnd();
       } else {
         setSessionTimeLeft(remaining);
-        setShowEndingBanner(remaining <= 10);
+        setShowEndingBanner(remaining <= 60);
       }
     }, 1000);
 
@@ -154,7 +159,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     const remaining = totalSeconds - elapsed;
     if (remaining > 0) {
       setSessionTimeLeft(remaining);
-      setShowEndingBanner(remaining <= 10);
+      setShowEndingBanner(remaining <= 60);
     }
 
     return () => clearInterval(interval);
@@ -164,8 +169,8 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   useEffect(() => {
     if (!showVideo || sessionTimeLeft === null) return;
 
-    // Always show countdown in the last 10 seconds
-    if (sessionTimeLeft <= 10) {
+    // Always show countdown in the last 60 seconds
+    if (sessionTimeLeft <= 60) {
       setShowCountdown(true);
       return;
     }
@@ -183,9 +188,9 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showVideo]);
 
-  // Keep countdown visible in last 10 seconds
+  // Keep countdown visible in last 60 seconds
   useEffect(() => {
-    if (sessionTimeLeft !== null && sessionTimeLeft <= 10) {
+    if (sessionTimeLeft !== null && sessionTimeLeft <= 60) {
       setShowCountdown(true);
     }
   }, [sessionTimeLeft]);
@@ -194,8 +199,8 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     setShowCountdown(true);
     if (countdownHideTimer.current) clearTimeout(countdownHideTimer.current);
     countdownHideTimer.current = setTimeout(() => {
-      // Don't hide if in last 10 seconds
-      if (sessionTimeLeft !== null && sessionTimeLeft > 10) {
+      // Don't hide if in last 60 seconds
+      if (sessionTimeLeft !== null && sessionTimeLeft > 60) {
         setShowCountdown(false);
       }
     }, 3000);
@@ -207,8 +212,22 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     }
   };
 
+  // Auto-end session 120s after DyadTimer completes
+  useEffect(() => {
+    if (dyadTimer.timerPhase !== 'completed') return;
+    console.log('[ActiveSession] Timer completed — auto-end in 120s');
+    const autoEndTimer = setTimeout(() => {
+      handleAutoEnd();
+    }, 120_000);
+    return () => clearTimeout(autoEndTimer);
+  }, [dyadTimer.timerPhase, handleAutoEnd]);
+
   const handleEndSession = async () => {
-    await endSession();
+    try {
+      await endSession();
+    } catch (err) {
+      console.error('[ActiveSession] End session error:', err);
+    }
     onClose?.();
   };
 
@@ -404,11 +423,11 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
           </button>
         </div>
 
-        {/* Ending Banner — last 10 seconds */}
+        {/* Ending Banner — last 60 seconds */}
         {showEndingBanner && sessionTimeLeft !== null && (
           <div className="mb-3 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center gap-2 text-amber-400/80 text-xs">
             <Clock className="w-3.5 h-3.5" />
-            Sitzung endet...
+            Die Sitzung endet in {sessionTimeLeft} Sekunden
           </div>
         )}
 
