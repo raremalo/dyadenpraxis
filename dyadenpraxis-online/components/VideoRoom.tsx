@@ -14,6 +14,7 @@ import {
   useDevices,
 } from '@daily-co/daily-react';
 import { useSettings } from '../contexts/SettingsContext';
+import { DyadRole } from '../types';
 
 interface VideoRoomProps {
   sessionId: string;
@@ -23,6 +24,7 @@ interface VideoRoomProps {
   onLeave?: () => void;
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
+  currentPhase?: DyadRole;
 }
 
 /**
@@ -36,10 +38,11 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
   onLeave,
   onError,
   onTimerToggle,
+  currentPhase,
 }) => {
   return (
     <DailyProvider url={roomUrl} token={meetingToken}>
-      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} />
+      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} />
       <DailyAudio />
     </DailyProvider>
   );
@@ -51,9 +54,10 @@ interface VideoUIProps {
   onLeave?: () => void;
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
+  currentPhase?: DyadRole;
 }
 
-const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) => {
+const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase }) => {
   const { t } = useSettings();
   const daily = useDaily();
   const meetingState = useMeetingState();
@@ -297,8 +301,12 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle }) =>
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden ${
+      className={`relative flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden transition-colors duration-700 ${
         isFullscreen ? 'rounded-none' : 'rounded-2xl'
+      } ${
+        currentPhase === DyadRole.SPEAKER ? 'border-2 border-orange-500/40' :
+        currentPhase === DyadRole.LISTENER ? 'border-2 border-blue-500/40' :
+        ''
       }`}
     >
       {/* Video Grid */}

@@ -3,11 +3,13 @@ import { DyadRole, DyadConfig } from '../types';
 import { X, Play, Pause, Volume2 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { GONG_SOUNDS } from '../hooks/useGongTimer';
+import { UseDyadTimerEngineReturn } from '../hooks/useDyadTimerEngine';
 
 interface DyadTimerProps {
   onExit: () => void;
   prompt: string;
   sessionDuration?: number; // Gesamtdauer aus Session (20, 40, 60 min)
+  timerEngine: UseDyadTimerEngineReturn;
 }
 
 // Grundsettings je Session-Dauer
@@ -31,22 +33,22 @@ function calcTotalMinutes(cfg: DyadConfig): number {
   return Math.round((contemplation + speakingListening + transitions) * 10) / 10;
 }
 
-const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration = 40 }) => {
+const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration = 40, timerEngine }) => {
   const { t } = useSettings();
 
-  // --- Phase: config vs running ---
-  const [timerPhase, setTimerPhase] = useState<'config' | 'running'>('config');
+  // Local config state (only for config screen)
   const [config, setConfig] = useState<DyadConfig>(() => getDefaultConfig(sessionDuration));
 
-  // --- Running state ---
-  const [currentRole, setCurrentRole] = useState<DyadRole>(DyadRole.CONTEMPLATION);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [round, setRound] = useState(1);
+  // Show time briefly on phase change
   const [showTime, setShowTime] = useState(true);
-  const [nextAfterTransition, setNextAfterTransition] = useState<DyadRole>(DyadRole.SPEAKER);
   const showTimeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Read from engine
+  const { currentRole, timeLeft, isActive, round, timerPhase, playBell, pauseTimer, resumeTimer } = timerEngine;
+  const engineConfig = timerEngine.config;
+
+  // Determine if we show config or running screen
+  const showConfig = timerPhase === 'idle';
 
   // --- Config helpers ---
   const updateConfig = useCallback((partial: Partial<DyadConfig>) => {
@@ -58,28 +60,10 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
     audio.play().catch(e => console.log('Audio preview blocked', e));
   }, []);
 
-  // --- Start timer ---
+  // --- Start timer via engine ---
   const handleStartTimer = useCallback(() => {
-    audioRef.current = new Audio(config.soundUrl);
-    setTimerPhase('running');
-    setRound(1);
-    if (config.contemplationMinutes > 0) {
-      setCurrentRole(DyadRole.CONTEMPLATION);
-      setTimeLeft(config.contemplationMinutes * 60);
-    } else {
-      setCurrentRole(DyadRole.SPEAKER);
-      setTimeLeft(config.durationMinutes * 60);
-    }
-    setIsActive(true);
-  }, [config]);
-
-  // --- Play sound ---
-  const playBell = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(e => console.log('Audio play blocked', e));
-    }
-  }, []);
+    timerEngine.startTimer(config);
+  }, [config, timerEngine]);
 
   // --- Show time briefly on phase change ---
   useEffect(() => {
@@ -94,75 +78,6 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
       if (showTimeRef.current) clearTimeout(showTimeRef.current);
     };
   }, [currentRole, timerPhase]);
-
-  // --- Countdown ---
-  useEffect(() => {
-    if (timerPhase !== 'running') return;
-    let interval: ReturnType<typeof setInterval>;
-
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-    } else if (isActive && timeLeft === 0) {
-      handleTransition();
-    }
-
-    return () => clearInterval(interval);
-  }, [isActive, timeLeft, timerPhase]);
-
-  // --- Transition logic ---
-  const handleTransition = useCallback(() => {
-    playBell();
-
-    switch (currentRole) {
-      case DyadRole.CONTEMPLATION:
-        // Nach Kontemplation → SPEAKER Runde 1
-        setCurrentRole(DyadRole.SPEAKER);
-        setTimeLeft(config.durationMinutes * 60);
-        break;
-
-      case DyadRole.SPEAKER:
-        // Nach SPEAKER → TRANSITION (dann LISTENER)
-        if (config.transitionSeconds > 0) {
-          setNextAfterTransition(DyadRole.LISTENER);
-          setCurrentRole(DyadRole.TRANSITION);
-          setTimeLeft(config.transitionSeconds);
-        } else {
-          setCurrentRole(DyadRole.LISTENER);
-          setTimeLeft(config.durationMinutes * 60);
-        }
-        break;
-
-      case DyadRole.LISTENER:
-        // Nach LISTENER → TRANSITION (dann SPEAKER oder COMPLETED)
-        if (round < config.rounds) {
-          if (config.transitionSeconds > 0) {
-            setNextAfterTransition(DyadRole.SPEAKER);
-            setCurrentRole(DyadRole.TRANSITION);
-            setTimeLeft(config.transitionSeconds);
-            setRound(r => r + 1);
-          } else {
-            setRound(r => r + 1);
-            setCurrentRole(DyadRole.SPEAKER);
-            setTimeLeft(config.durationMinutes * 60);
-          }
-        } else {
-          setCurrentRole(DyadRole.COMPLETED);
-          setIsActive(false);
-        }
-        break;
-
-      case DyadRole.TRANSITION:
-        // Nach TRANSITION → nextAfterTransition
-        setCurrentRole(nextAfterTransition);
-        setTimeLeft(config.durationMinutes * 60);
-        break;
-
-      default:
-        break;
-    }
-  }, [currentRole, config, round, nextAfterTransition, playBell]);
 
   // --- Format ---
   const formatTime = (seconds: number) => {
@@ -206,14 +121,15 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
 
   // --- Progress for the current phase ---
   const getPhaseTotal = () => {
-    if (currentRole === DyadRole.CONTEMPLATION) return config.contemplationMinutes * 60;
-    if (currentRole === DyadRole.TRANSITION) return config.transitionSeconds;
+    const cfg = engineConfig || config;
+    if (currentRole === DyadRole.CONTEMPLATION) return cfg.contemplationMinutes * 60;
+    if (currentRole === DyadRole.TRANSITION) return cfg.transitionSeconds;
     if (currentRole === DyadRole.COMPLETED) return 1;
-    return config.durationMinutes * 60;
+    return cfg.durationMinutes * 60;
   };
 
   // ========== CONFIG SCREEN ==========
-  if (timerPhase === 'config') {
+  if (showConfig) {
     const totalMin = calcTotalMinutes(config);
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-md bg-black/40 text-white">
@@ -228,7 +144,7 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
         <div className="max-w-lg w-full px-6 space-y-6 overflow-y-auto max-h-[85vh] py-4" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
           {/* Prompt */}
           <div className="text-center mb-2">
-            <h2 className="text-xl md:text-2xl font-serif italic leading-relaxed">"{prompt}"</h2>
+            <h2 className="text-xl md:text-2xl font-serif italic leading-relaxed">&ldquo;{prompt}&rdquo;</h2>
             <p className="text-sm opacity-50 mt-2">{sessionDuration} min Session</p>
           </div>
 
@@ -370,6 +286,7 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
   }
 
   // ========== RUNNING SCREEN ==========
+  const cfg = engineConfig || config;
   const phaseTotal = getPhaseTotal();
   const progressPercent = currentRole === DyadRole.COMPLETED
     ? 100
@@ -382,7 +299,7 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium tracking-widest uppercase">Dyadenpraxis</span>
           <span className="text-xs opacity-50">
-            {t.timer?.roundLabel || 'Runde'} {round}/{config.rounds}
+            {t.timer?.roundLabel || 'Runde'} {round}/{cfg.rounds}
           </span>
         </div>
         <button onClick={onExit} className="p-2 rounded-full hover:bg-white/10 transition-colors">
@@ -409,14 +326,14 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
 
         {/* Prompt */}
         <div className="mb-12 space-y-4">
-          <h2 className="text-2xl md:text-3xl font-serif italic leading-relaxed">"{prompt}"</h2>
+          <h2 className="text-2xl md:text-3xl font-serif italic leading-relaxed">&ldquo;{prompt}&rdquo;</h2>
           <p className="text-lg opacity-60 font-light">{getInstructions()}</p>
         </div>
 
         {/* Controls */}
         <div className="flex items-center gap-6">
           <button
-            onClick={() => setIsActive(!isActive)}
+            onClick={() => isActive ? pauseTimer() : resumeTimer()}
             className="p-4 rounded-full border border-current hover:bg-white/10 transition-all"
           >
             {isActive ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}

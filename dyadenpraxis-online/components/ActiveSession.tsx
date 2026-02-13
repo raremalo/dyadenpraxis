@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import VideoRoom from './VideoRoom';
 import DyadTimer from './DyadTimer';
 import { fetchDyadPrompt } from '../services/geminiService';
+import { useDyadTimerEngine, calcTotalSeconds } from '../hooks/useDyadTimerEngine';
+import { DyadRole } from '../types';
 
 interface ActiveSessionProps {
   onClose?: () => void;
@@ -30,14 +32,19 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     error,
   } = useSessionContext();
 
+  // DyadTimer Engine — lives here so timer survives overlay close
+  const dyadTimer = useDyadTimerEngine();
+
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [showVideo, setShowVideo] = useState(false);
-  const [showTimer, setShowTimer] = useState(false);
+  const [showTimerOverlay, setShowTimerOverlay] = useState(false);
   const [sessionPrompt, setSessionPrompt] = useState('');
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
   const [showEndingBanner, setShowEndingBanner] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
+  const [showPromptOverlay, setShowPromptOverlay] = useState(false);
   const countdownHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerStartedAtRef = useRef<number | null>(null);
 
   // Format remaining time as m:ss
   const formatSessionTime = (seconds: number) => {
@@ -52,6 +59,28 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
       .then((data) => setSessionPrompt(data.question))
       .catch((err) => console.error('[ActiveSession] Prompt error:', err));
   }, []);
+
+  // Auto-close timer overlay 5s after timer starts, then show prompt 3s
+  useEffect(() => {
+    if (dyadTimer.timerPhase !== 'running') return;
+    if (!showTimerOverlay) return;
+
+    // Record when timer started for session countdown adjustment
+    if (!timerStartedAtRef.current) {
+      timerStartedAtRef.current = Date.now();
+    }
+
+    const autoCloseTimer = setTimeout(() => {
+      setShowTimerOverlay(false);
+      // Show prompt overlay in video area for 3 seconds
+      if (sessionPrompt) {
+        setShowPromptOverlay(true);
+        setTimeout(() => setShowPromptOverlay(false), 3000);
+      }
+    }, 5000);
+
+    return () => clearTimeout(autoCloseTimer);
+  }, [dyadTimer.timerPhase, showTimerOverlay, sessionPrompt]);
 
   const isTriad = currentSession?.is_open && !!currentSession?.third_participant_id;
 
@@ -100,8 +129,12 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   useEffect(() => {
     if (!currentSession?.started_at || currentSession.status !== 'active' || !showVideo) return;
 
-    const totalSeconds = (currentSession.duration + 2) * 60;
-    const startedAt = new Date(currentSession.started_at).getTime();
+    // If dyad timer is running, use timer duration + 2 min buffer
+    const totalSeconds = dyadTimer.isTimerRunning && dyadTimer.totalTimerSeconds > 0
+      ? dyadTimer.totalTimerSeconds + 120
+      : (currentSession.duration + 2) * 60;
+    // Use timer start time if available, otherwise session start time
+    const startedAt = timerStartedAtRef.current || new Date(currentSession.started_at).getTime();
 
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startedAt) / 1000);
@@ -125,7 +158,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     }
 
     return () => clearInterval(interval);
-  }, [currentSession?.started_at, currentSession?.status, currentSession?.duration, showVideo, handleAutoEnd]);
+  }, [currentSession?.started_at, currentSession?.status, currentSession?.duration, showVideo, handleAutoEnd, dyadTimer.isTimerRunning, dyadTimer.totalTimerSeconds]);
 
   // Auto-hide countdown after 3 seconds, show again on tap
   useEffect(() => {
@@ -387,16 +420,27 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
             roomUrl={videoRoomUrl}
             meetingToken={videoToken}
             onLeave={handleEndSession}
-            onTimerToggle={() => setShowTimer(true)}
+            onTimerToggle={() => setShowTimerOverlay(true)}
+            currentPhase={dyadTimer.isTimerRunning ? dyadTimer.currentRole : undefined}
           />
         </div>
 
+        {/* Prompt Overlay — shown briefly after timer overlay auto-closes */}
+        {showPromptOverlay && sessionPrompt && (
+          <div className="absolute top-4 left-4 right-4 z-30 flex justify-center pointer-events-none fade-in">
+            <div className="bg-black/60 backdrop-blur-sm text-white px-6 py-4 rounded-2xl max-w-md text-center">
+              <p className="text-lg font-serif italic leading-relaxed">&ldquo;{sessionPrompt}&rdquo;</p>
+            </div>
+          </div>
+        )}
+
         {/* DyadTimer Overlay */}
-        {showTimer && sessionPrompt && (
+        {showTimerOverlay && sessionPrompt && (
           <DyadTimer
-            onExit={() => setShowTimer(false)}
+            onExit={() => setShowTimerOverlay(false)}
             prompt={sessionPrompt}
             sessionDuration={currentSession.duration}
+            timerEngine={dyadTimer}
           />
         )}
       </div>
