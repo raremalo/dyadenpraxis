@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -82,10 +82,16 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
   const [recommended, setRecommended] = useState<Partner[]>([]);
   const [recent, setRecent] = useState<Partner[]>([]);
 
+  // Stable ref for filters — prevents search callback from depending on filters object
+  const filtersRef = useRef(filters);
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+
   const search = useCallback(async (newFilters?: Partial<SearchFilters>) => {
     if (!user) return;
 
-    const activeFilters = newFilters ? { ...filters, ...newFilters } : filters;
+    const activeFilters = newFilters ? { ...filtersRef.current, ...newFilters } : filtersRef.current;
     if (newFilters) {
       setFiltersState(activeFilters);
     }
@@ -119,7 +125,7 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [user, filters]);
+  }, [user]);
 
   const loadMore = useCallback(async () => {
     if (!user || isLoading || partners.length >= totalCount) return;
@@ -127,14 +133,15 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
     setIsLoading(true);
 
     try {
+      const f = filtersRef.current;
       const { data, error: rpcError } = await supabase.rpc('search_partners_fuzzy', {
-        p_search_term: filters.searchTerm || '',
+        p_search_term: f.searchTerm || '',
         p_exclude_user_id: user.id,
-        p_trust_filter: filters.trustFilter,
-        p_level_filter: filters.levelFilter,
-        p_duration_filter: filters.durationFilter,
-        p_online_only: filters.onlineOnly,
-        p_sort_by: filters.sortBy,
+        p_trust_filter: f.trustFilter,
+        p_level_filter: f.levelFilter,
+        p_duration_filter: f.durationFilter,
+        p_online_only: f.onlineOnly,
+        p_sort_by: f.sortBy,
         p_page_offset: offset,
         p_page_limit: PAGE_SIZE,
       });
@@ -150,7 +157,7 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [user, isLoading, partners.length, totalCount, filters, offset]);
+  }, [user, isLoading, partners.length, totalCount, offset]);
 
   const loadRecommended = useCallback(async () => {
     if (!user) return;

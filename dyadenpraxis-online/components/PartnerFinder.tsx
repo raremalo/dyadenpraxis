@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Star, Filter, Loader2, Users, Clock } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { usePartnerSearch, Partner, TrustLevel } from '../hooks/usePartnerSearch';
@@ -33,15 +33,27 @@ const PartnerFinder: React.FC<PartnerFinderProps> = ({
     setFilters,
   } = usePartnerSearch();
 
-  // Debounced search
+  // Stable ref for search — prevents useEffect from re-firing when search is recreated
+  const searchRef = useRef(search);
+  useEffect(() => { searchRef.current = search; }, [search]);
+
+  // Debounced search on text input
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchInput || filters.onlineOnly || filters.trustFilter) {
-        search({ searchTerm: searchInput });
+      if (searchInput) {
+        searchRef.current({ searchTerm: searchInput });
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchInput, search, filters.onlineOnly, filters.trustFilter]);
+  }, [searchInput]);
+
+  // Trigger search when filters change
+  useEffect(() => {
+    if (filters.onlineOnly || filters.trustFilter) {
+      searchRef.current({ searchTerm: searchInput });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.onlineOnly, filters.trustFilter]);
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
