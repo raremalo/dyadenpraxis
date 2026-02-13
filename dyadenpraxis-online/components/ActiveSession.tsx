@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Loader2, Play, X, Clock, User, Video, Users, AlertTriangle } from 'lucide-react';
+import { Loader2, Play, X, Clock, User, Video, Users } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,7 +35,9 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   const [showTimer, setShowTimer] = useState(false);
   const [sessionPrompt, setSessionPrompt] = useState('');
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
-  const [showTimeWarning, setShowTimeWarning] = useState(false);
+  const [showEndingBanner, setShowEndingBanner] = useState(false);
+  const [showCountdown, setShowCountdown] = useState(true);
+  const countdownHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Format remaining time as m:ss
   const formatSessionTime = (seconds: number) => {
@@ -110,7 +112,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
         handleAutoEnd();
       } else {
         setSessionTimeLeft(remaining);
-        setShowTimeWarning(remaining <= 60);
+        setShowEndingBanner(remaining <= 10);
       }
     }, 1000);
 
@@ -119,11 +121,52 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     const remaining = totalSeconds - elapsed;
     if (remaining > 0) {
       setSessionTimeLeft(remaining);
-      setShowTimeWarning(remaining <= 60);
+      setShowEndingBanner(remaining <= 10);
     }
 
     return () => clearInterval(interval);
   }, [currentSession?.started_at, currentSession?.status, currentSession?.duration, showVideo, handleAutoEnd]);
+
+  // Auto-hide countdown after 3 seconds, show again on tap
+  useEffect(() => {
+    if (!showVideo || sessionTimeLeft === null) return;
+
+    // Always show countdown in the last 10 seconds
+    if (sessionTimeLeft <= 10) {
+      setShowCountdown(true);
+      return;
+    }
+
+    // On mount: show for 3s then hide
+    setShowCountdown(true);
+    countdownHideTimer.current = setTimeout(() => {
+      setShowCountdown(false);
+    }, 3000);
+
+    return () => {
+      if (countdownHideTimer.current) clearTimeout(countdownHideTimer.current);
+    };
+  // Only run on showVideo change (mount), not on every tick
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showVideo]);
+
+  // Keep countdown visible in last 10 seconds
+  useEffect(() => {
+    if (sessionTimeLeft !== null && sessionTimeLeft <= 10) {
+      setShowCountdown(true);
+    }
+  }, [sessionTimeLeft]);
+
+  const handleCountdownTap = () => {
+    setShowCountdown(true);
+    if (countdownHideTimer.current) clearTimeout(countdownHideTimer.current);
+    countdownHideTimer.current = setTimeout(() => {
+      // Don't hide if in last 10 seconds
+      if (sessionTimeLeft !== null && sessionTimeLeft > 10) {
+        setShowCountdown(false);
+      }
+    }, 3000);
+  };
 
   const handleStartSession = async () => {
     if (isRequester) {
@@ -306,10 +349,13 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
                   </span>
                 ) : partner?.name}
               </h3>
-              <span className="text-xs text-[var(--c-text-muted)]">
+              <span
+                className="text-xs text-[var(--c-text-muted)] cursor-pointer"
+                onClick={handleCountdownTap}
+              >
                 {currentSession.duration} min
-                {sessionTimeLeft !== null && (
-                  <span className={showTimeWarning ? 'text-rose-400 animate-pulse ml-2 font-medium' : 'ml-2 opacity-60'}>
+                {sessionTimeLeft !== null && showCountdown && (
+                  <span className={sessionTimeLeft <= 10 ? 'text-amber-400 ml-2 font-medium' : 'ml-2 opacity-60 transition-opacity'}>
                     {formatSessionTime(sessionTimeLeft)}
                   </span>
                 )}
@@ -325,21 +371,11 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
           </button>
         </div>
 
-        {/* Time Warning Banner */}
-        {showTimeWarning && sessionTimeLeft !== null && (
-          <div className="mb-3 px-4 py-2.5 bg-rose-500/15 border border-rose-500/30 rounded-xl flex items-center justify-center gap-2 text-rose-400 text-sm font-medium animate-pulse">
-            <AlertTriangle className="w-4 h-4" />
-            {sessionTimeLeft <= 10
-              ? 'Sitzung endet...'
-              : `Noch ${formatSessionTime(sessionTimeLeft)} — Sitzung endet bald`}
-          </div>
-        )}
-
-        {/* 5 min warning (subtle) */}
-        {!showTimeWarning && sessionTimeLeft !== null && sessionTimeLeft <= 300 && (
+        {/* Ending Banner — last 10 seconds */}
+        {showEndingBanner && sessionTimeLeft !== null && (
           <div className="mb-3 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center gap-2 text-amber-400/80 text-xs">
             <Clock className="w-3.5 h-3.5" />
-            Noch {formatSessionTime(sessionTimeLeft)}
+            Sitzung endet...
           </div>
         )}
 
