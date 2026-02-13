@@ -158,7 +158,11 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const endSession = useCallback(async () => {
     if (!currentSession) return;
-    await completeSession(currentSession.id);
+    const success = await completeSession(currentSession.id);
+    if (!success) {
+      console.error('[SessionContext] endSession: completeSession failed for', currentSession.id);
+    }
+    // Always clear state — user wants to leave regardless of DB result
     setCurrentSession(null);
     setVideoRoomUrl(null);
     setVideoToken(null);
