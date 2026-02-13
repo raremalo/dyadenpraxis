@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
 
     // 4. Daily.co Room erstellen
     const roomName = `dyade-${sessionId.slice(0, 8)}-${Date.now()}`;
-    const expirySeconds = (session.duration + 10) * 60; // Session-Dauer + 10 min Puffer
+    const expirySeconds = (session.duration + 5) * 60; // Session-Dauer + 5 min Sicherheitspuffer (Frontend beendet bei +2 min)
 
     const roomResponse = await fetch("https://api.daily.co/v1/rooms", {
       method: "POST",
