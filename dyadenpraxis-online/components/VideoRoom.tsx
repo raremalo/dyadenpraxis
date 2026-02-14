@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer, Settings, EyeOff, Eye, X } from 'lucide-react';
+import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer, Settings, EyeOff, Eye, X, Ear, MessageCircle } from 'lucide-react';
 import {
   DailyProvider,
   DailyAudio,
@@ -25,7 +25,7 @@ interface VideoRoomProps {
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
-  leaveVideoRef?: React.MutableRefObject<(() => void) | null>;
+  leaveVideoRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
 /**
@@ -57,7 +57,7 @@ interface VideoUIProps {
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
-  leaveVideoRef?: React.MutableRefObject<(() => void) | null>;
+  leaveVideoRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
 const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase, leaveVideoRef }) => {
@@ -145,7 +145,7 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
   useEffect(() => {
     if (!leaveVideoRef || !daily) return;
     leaveVideoRef.current = () => {
-      daily.leave().catch(() => {});
+      return daily.leave().catch(() => {});
     };
     return () => { leaveVideoRef.current = null; };
   }, [daily, leaveVideoRef]);
@@ -474,17 +474,30 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
       )}
 
       {/* Controls */}
-      <div className={`flex items-center justify-center gap-3 p-4 border-t transition-colors duration-700 ${
-        currentPhase === DyadRole.SPEAKER
-          ? 'bg-orange-500/20 border-orange-500/30'
-          : currentPhase === DyadRole.LISTENER
-          ? 'bg-blue-500/20 border-blue-500/30'
-          : 'bg-[var(--c-bg-app)] border-[var(--c-border)]'
-      }`}>
+      <div className="flex items-center justify-center gap-3 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
         {/* Participants count */}
         <span className="text-sm text-[var(--c-text-muted)] mr-auto">
           {allParticipantIds.length} {t.video?.participants || 'Teilnehmer'}
         </span>
+
+        {/* Phase indicator — speaker/listener */}
+        {currentPhase && (
+          <div
+            className={`p-3 rounded-full transition-all duration-700 cursor-default ${
+              currentPhase === DyadRole.SPEAKER
+                ? 'bg-orange-500 text-white'
+                : currentPhase === DyadRole.LISTENER
+                ? 'bg-blue-500 text-white'
+                : ''
+            }`}
+            title={currentPhase === DyadRole.SPEAKER ? 'Sprechen' : 'Zuhören'}
+          >
+            {currentPhase === DyadRole.SPEAKER
+              ? <MessageCircle className="w-5 h-5" />
+              : <Ear className="w-5 h-5" />
+            }
+          </div>
+        )}
 
         {/* Timer/Gong toggle */}
         {onTimerToggle && (
