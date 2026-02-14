@@ -130,30 +130,28 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     const roomData = await createRoom(currentSession.id, isTriad);
     if (!roomData) return false;
 
-    let success: boolean;
-    if (isTriad && roomData.tokens.third) {
-      success = await startTriadSession(
-        currentSession.id,
-        roomData.roomUrl,
-        roomData.tokens.requester,
-        roomData.tokens.partner,
-        roomData.tokens.third
-      );
-    } else {
-      success = await startSession(
-        currentSession.id,
-        roomData.roomUrl,
-        roomData.tokens.requester,
-        roomData.tokens.partner
-      );
-    }
+    const updatedSession = isTriad && roomData.tokens.third
+      ? await startTriadSession(
+          currentSession.id,
+          roomData.roomUrl,
+          roomData.tokens.requester,
+          roomData.tokens.partner,
+          roomData.tokens.third
+        )
+      : await startSession(
+          currentSession.id,
+          roomData.roomUrl,
+          roomData.tokens.requester,
+          roomData.tokens.partner
+        );
 
-    if (success) {
+    if (updatedSession) {
+      setCurrentSession(updatedSession);
       setVideoRoomUrl(roomData.roomUrl);
       setVideoToken(roomData.tokens.requester);
     }
 
-    return success;
+    return !!updatedSession;
   }, [currentSession, isRequester, createRoom, startSession, startTriadSession]);
 
   const endSession = useCallback(async () => {
