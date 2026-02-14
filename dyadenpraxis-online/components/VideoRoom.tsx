@@ -25,6 +25,7 @@ interface VideoRoomProps {
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
+  leaveVideoRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 /**
@@ -39,10 +40,11 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
   onError,
   onTimerToggle,
   currentPhase,
+  leaveVideoRef,
 }) => {
   return (
     <DailyProvider url={roomUrl} token={meetingToken}>
-      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} />
+      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} leaveVideoRef={leaveVideoRef} />
       <DailyAudio />
     </DailyProvider>
   );
@@ -55,9 +57,10 @@ interface VideoUIProps {
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
+  leaveVideoRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase }) => {
+const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase, leaveVideoRef }) => {
   const { t } = useSettings();
   const daily = useDaily();
   const meetingState = useMeetingState();
@@ -137,6 +140,15 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
     daily?.leave();
     onLeave?.();
   }, [daily, onLeave]);
+
+  // Register daily.leave() in ref so ActiveSession can trigger it on session end
+  useEffect(() => {
+    if (!leaveVideoRef || !daily) return;
+    leaveVideoRef.current = () => {
+      daily.leave().catch(() => {});
+    };
+    return () => { leaveVideoRef.current = null; };
+  }, [daily, leaveVideoRef]);
 
   const toggleAudio = useCallback(() => {
     if (daily) {
@@ -462,7 +474,13 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
       )}
 
       {/* Controls */}
-      <div className="flex items-center justify-center gap-3 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
+      <div className={`flex items-center justify-center gap-3 p-4 border-t transition-colors duration-700 ${
+        currentPhase === DyadRole.SPEAKER
+          ? 'bg-orange-500/20 border-orange-500/30'
+          : currentPhase === DyadRole.LISTENER
+          ? 'bg-blue-500/20 border-blue-500/30'
+          : 'bg-[var(--c-bg-app)] border-[var(--c-border)]'
+      }`}>
         {/* Participants count */}
         <span className="text-sm text-[var(--c-text-muted)] mr-auto">
           {allParticipantIds.length} {t.video?.participants || 'Teilnehmer'}

@@ -36,6 +36,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   const dyadTimer = useDyadTimerEngine();
 
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const leaveVideoRef = useRef<(() => void) | null>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [showTimerOverlay, setShowTimerOverlay] = useState(false);
   const [sessionPrompt, setSessionPrompt] = useState('');
@@ -123,6 +124,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   // OHNE Timer: gebuchte Dauer + 10 min ab session.started_at
   const handleAutoEnd = useCallback(async () => {
     console.log('[ActiveSession] Auto-End: Session-Zeit abgelaufen');
+    leaveVideoRef.current?.();
     try {
       await endSession();
     } catch (err) {
@@ -223,6 +225,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   }, [dyadTimer.timerPhase, handleAutoEnd]);
 
   const handleEndSession = async () => {
+    leaveVideoRef.current?.();
     try {
       await endSession();
     } catch (err) {
@@ -441,6 +444,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
             onLeave={handleEndSession}
             onTimerToggle={() => setShowTimerOverlay(true)}
             currentPhase={dyadTimer.isTimerRunning ? dyadTimer.currentRole : undefined}
+            leaveVideoRef={leaveVideoRef}
           />
         </div>
 
