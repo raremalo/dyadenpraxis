@@ -12,6 +12,7 @@ import {
   useDailyError,
   useInputSettings,
   useDevices,
+  useAppMessage,
 } from '@daily-co/daily-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { DyadRole } from '../types';
@@ -25,6 +26,7 @@ interface VideoRoomProps {
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
+  phaseSoundUrl?: string;
   leaveVideoRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
@@ -40,11 +42,12 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
   onError,
   onTimerToggle,
   currentPhase,
+  phaseSoundUrl,
   leaveVideoRef,
 }) => {
   return (
     <DailyProvider url={roomUrl} token={meetingToken}>
-      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} leaveVideoRef={leaveVideoRef} />
+      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} phaseSoundUrl={phaseSoundUrl} leaveVideoRef={leaveVideoRef} />
       <DailyAudio />
     </DailyProvider>
   );
@@ -57,10 +60,11 @@ interface VideoUIProps {
   onError?: (error: string) => void;
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
+  phaseSoundUrl?: string;
   leaveVideoRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
-const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase, leaveVideoRef }) => {
+const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase, phaseSoundUrl, leaveVideoRef }) => {
   const { t } = useSettings();
   const daily = useDaily();
   const meetingState = useMeetingState();
@@ -72,6 +76,59 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
   const settingsPanelRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+
+  // --- Phase + Gong sync via AppMessage ---
+  const [remotePhase, setRemotePhase] = useState<DyadRole | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const playRemoteGong = useCallback((soundUrl: string) => {
+    if (!remoteAudioRef.current || remoteAudioRef.current.src !== soundUrl) {
+      remoteAudioRef.current = new Audio(soundUrl);
+    }
+    remoteAudioRef.current.currentTime = 0;
+    remoteAudioRef.current.play().catch(e => console.log('[VideoUI] Remote gong blocked:', e));
+  }, []);
+
+  const sendAppMessage = useAppMessage({
+    onAppMessage: useCallback((ev: { data: { type: string; role?: string; soundUrl?: string } }) => {
+      if (ev.data?.type === 'phase') {
+        const role = ev.data.role as DyadRole;
+        // Spiegeln: Partner sieht die umgekehrte Rolle
+        if (role === DyadRole.SPEAKER) setRemotePhase(DyadRole.LISTENER);
+        else if (role === DyadRole.LISTENER) setRemotePhase(DyadRole.SPEAKER);
+        else setRemotePhase(role); // CONTEMPLATION, TRANSITION, COMPLETED unverändert
+        // Gong abspielen bei Phasenwechsel
+        if (ev.data.soundUrl) {
+          playRemoteGong(ev.data.soundUrl);
+        }
+      } else if (ev.data?.type === 'phase-stop') {
+        setRemotePhase(null);
+      }
+    }, [playRemoteGong]),
+  });
+
+  // Sende Phase wenn sich currentPhase ändert (nur Timer-Starter hat currentPhase)
+  useEffect(() => {
+    if (!daily || meetingState !== 'joined-meeting') return;
+    if (currentPhase) {
+      sendAppMessage({ type: 'phase', role: currentPhase, soundUrl: phaseSoundUrl || '' }, '*');
+    } else {
+      sendAppMessage({ type: 'phase-stop' }, '*');
+    }
+  }, [currentPhase, phaseSoundUrl, daily, meetingState, sendAppMessage]);
+
+  // Cleanup remote audio on unmount
+  useEffect(() => {
+    return () => {
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Lokale Phase (Timer-Starter) oder Remote-Phase (Partner)
+  const effectivePhase = currentPhase || remotePhase;
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -316,8 +373,8 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
       className={`relative flex flex-col h-full bg-[var(--c-bg-card)] overflow-hidden transition-shadow duration-700 ${
         isFullscreen ? 'rounded-none' : 'rounded-2xl'
       } ${
-        currentPhase === DyadRole.SPEAKER ? 'shadow-[inset_0_0_0_4px_rgba(249,115,22,0.5)]' :
-        currentPhase === DyadRole.LISTENER ? 'shadow-[inset_0_0_0_4px_rgba(59,130,246,0.5)]' :
+        effectivePhase === DyadRole.SPEAKER ? 'shadow-[inset_0_0_0_4px_rgba(249,115,22,0.5)]' :
+        effectivePhase === DyadRole.LISTENER ? 'shadow-[inset_0_0_0_4px_rgba(59,130,246,0.5)]' :
         ''
       }`}
     >
@@ -480,19 +537,19 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
           {allParticipantIds.length} {t.video?.participants || 'Teilnehmer'}
         </span>
 
-        {/* Phase indicator — speaker/listener */}
-        {currentPhase && (
+        {/* Phase indicator — speaker/listener (lokal oder via AppMessage vom Partner) */}
+        {effectivePhase && (
           <div
             className={`p-3 rounded-full transition-all duration-700 cursor-default ${
-              currentPhase === DyadRole.SPEAKER
+              effectivePhase === DyadRole.SPEAKER
                 ? 'bg-orange-500 text-white'
-                : currentPhase === DyadRole.LISTENER
+                : effectivePhase === DyadRole.LISTENER
                 ? 'bg-blue-500 text-white'
                 : ''
             }`}
-            title={currentPhase === DyadRole.SPEAKER ? 'Sprechen' : 'Zuhören'}
+            title={effectivePhase === DyadRole.SPEAKER ? 'Sprechen' : 'Zuhören'}
           >
-            {currentPhase === DyadRole.SPEAKER
+            {effectivePhase === DyadRole.SPEAKER
               ? <MessageCircle className="w-5 h-5" />
               : <Ear className="w-5 h-5" />
             }
