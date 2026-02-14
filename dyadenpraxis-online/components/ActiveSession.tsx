@@ -428,8 +428,8 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
 
         {/* Ending Banner — last 60 seconds */}
         {showEndingBanner && sessionTimeLeft !== null && (
-          <div className="mb-3 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center gap-2 text-amber-400/80 text-xs">
-            <Clock className="w-3.5 h-3.5" />
+          <div className="mb-3 px-4 py-3 bg-stone-100 dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-xl flex items-center justify-center gap-2 text-stone-700 dark:text-stone-200 text-sm font-medium">
+            <Clock className="w-4 h-4" />
             Die Sitzung endet in {sessionTimeLeft} Sekunden
           </div>
         )}
@@ -445,6 +445,13 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
             onTimerToggle={() => setShowTimerOverlay(true)}
             currentPhase={dyadTimer.isTimerRunning ? dyadTimer.currentRole : undefined}
             phaseSoundUrl={dyadTimer.config?.soundUrl}
+            sessionTimeLeft={sessionTimeLeft}
+            onRemoteSessionEnding={(secondsLeft) => {
+              if (!dyadTimer.isTimerRunning) {
+                setSessionTimeLeft(secondsLeft);
+                setShowEndingBanner(true);
+              }
+            }}
             leaveVideoRef={leaveVideoRef}
           />
         </div>
