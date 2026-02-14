@@ -444,6 +444,7 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
             onLeave={handleEndSession}
             onTimerToggle={() => setShowTimerOverlay(true)}
             currentPhase={dyadTimer.isTimerRunning ? dyadTimer.currentRole : undefined}
+            phaseSoundUrl={dyadTimer.config?.soundUrl}
             leaveVideoRef={leaveVideoRef}
           />
         </div>
