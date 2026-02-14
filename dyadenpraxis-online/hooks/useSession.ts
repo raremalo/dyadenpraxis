@@ -80,8 +80,8 @@ interface UseSessionReturn {
   loadOpenTriads: () => Promise<void>;
   createSession: (params: CreateSessionParams) => Promise<Session | null>;
   acceptSession: (sessionId: string) => Promise<boolean>;
-  startSession: (sessionId: string, roomUrl: string, requesterToken: string, partnerToken: string) => Promise<boolean>;
-  startTriadSession: (sessionId: string, roomUrl: string, requesterToken: string, partnerToken: string, thirdToken: string) => Promise<boolean>;
+  startSession: (sessionId: string, roomUrl: string, requesterToken: string, partnerToken: string) => Promise<Session | null>;
+  startTriadSession: (sessionId: string, roomUrl: string, requesterToken: string, partnerToken: string, thirdToken: string) => Promise<Session | null>;
   completeSession: (sessionId: string) => Promise<boolean>;
   cancelSession: (sessionId: string) => Promise<boolean>;
   joinOpenSession: (sessionId: string) => Promise<boolean>;
@@ -214,13 +214,13 @@ export function useSession(): UseSessionReturn {
     roomUrl: string,
     requesterToken: string,
     partnerToken: string
-  ): Promise<boolean> => {
-    if (!user) return false;
+  ): Promise<Session | null> => {
+    if (!user) return null;
     setIsLoading(true);
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('sessions')
         .update({
           status: 'active',
@@ -229,20 +229,27 @@ export function useSession(): UseSessionReturn {
           room_token: requesterToken,
           partner_token: partnerToken,
         })
-        .eq('id', sessionId);
+        .eq('id', sessionId)
+        .select(`
+          *,
+          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
+          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
+        `)
+        .single();
 
       if (updateError) throw new Error(updateError.message);
-      
-      await loadSessions();
-      return true;
+
+      const session = data as Session;
+      setActiveSession(session);
+      return session;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Session starten fehlgeschlagen';
       setError(msg);
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }
-  }, [user, loadSessions]);
+  }, [user]);
 
   const completeSession = useCallback(async (sessionId: string): Promise<boolean> => {
     if (!user) return false;
@@ -423,13 +430,13 @@ export function useSession(): UseSessionReturn {
     requesterToken: string,
     partnerToken: string,
     thirdToken: string
-  ): Promise<boolean> => {
-    if (!user) return false;
+  ): Promise<Session | null> => {
+    if (!user) return null;
     setIsLoading(true);
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('sessions')
         .update({
           status: 'active',
@@ -439,20 +446,27 @@ export function useSession(): UseSessionReturn {
           partner_token: partnerToken,
           third_participant_token: thirdToken,
         })
-        .eq('id', sessionId);
+        .eq('id', sessionId)
+        .select(`
+          *,
+          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
+          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
+        `)
+        .single();
 
       if (updateError) throw new Error(updateError.message);
 
-      await loadSessions();
-      return true;
+      const session = data as Session;
+      setActiveSession(session);
+      return session;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Triade starten fehlgeschlagen';
       setError(msg);
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }
-  }, [user, loadSessions]);
+  }, [user]);
 
   const getSession = useCallback(async (sessionId: string): Promise<Session | null> => {
     try {
