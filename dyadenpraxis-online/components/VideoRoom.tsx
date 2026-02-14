@@ -27,6 +27,8 @@ interface VideoRoomProps {
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
   phaseSoundUrl?: string;
+  sessionTimeLeft?: number | null;
+  onRemoteSessionEnding?: (secondsLeft: number) => void;
   leaveVideoRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
@@ -43,11 +45,13 @@ const VideoRoom: React.FC<VideoRoomProps> = ({
   onTimerToggle,
   currentPhase,
   phaseSoundUrl,
+  sessionTimeLeft,
+  onRemoteSessionEnding,
   leaveVideoRef,
 }) => {
   return (
     <DailyProvider url={roomUrl} token={meetingToken}>
-      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} phaseSoundUrl={phaseSoundUrl} leaveVideoRef={leaveVideoRef} />
+      <VideoUI onLeave={onLeave} onError={onError} onTimerToggle={onTimerToggle} currentPhase={currentPhase} phaseSoundUrl={phaseSoundUrl} sessionTimeLeft={sessionTimeLeft} onRemoteSessionEnding={onRemoteSessionEnding} leaveVideoRef={leaveVideoRef} />
       <DailyAudio />
     </DailyProvider>
   );
@@ -61,10 +65,12 @@ interface VideoUIProps {
   onTimerToggle?: () => void;
   currentPhase?: DyadRole;
   phaseSoundUrl?: string;
+  sessionTimeLeft?: number | null;
+  onRemoteSessionEnding?: (secondsLeft: number) => void;
   leaveVideoRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
-const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase, phaseSoundUrl, leaveVideoRef }) => {
+const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, currentPhase, phaseSoundUrl, sessionTimeLeft, onRemoteSessionEnding, leaveVideoRef }) => {
   const { t } = useSettings();
   const daily = useDaily();
   const meetingState = useMeetingState();
@@ -90,7 +96,7 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
   }, []);
 
   const sendAppMessage = useAppMessage({
-    onAppMessage: useCallback((ev: { data: { type: string; role?: string; soundUrl?: string } }) => {
+    onAppMessage: useCallback((ev: { data: { type: string; role?: string; soundUrl?: string; secondsLeft?: number } }) => {
       if (ev.data?.type === 'phase') {
         const role = ev.data.role as DyadRole;
         // Spiegeln: Partner sieht die umgekehrte Rolle
@@ -103,8 +109,10 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
         }
       } else if (ev.data?.type === 'phase-stop') {
         setRemotePhase(null);
+      } else if (ev.data?.type === 'session-ending' && typeof ev.data.secondsLeft === 'number') {
+        onRemoteSessionEnding?.(ev.data.secondsLeft);
       }
-    }, [playRemoteGong]),
+    }, [playRemoteGong, onRemoteSessionEnding]),
   });
 
   // Sende Phase wenn sich currentPhase ändert (nur Timer-Starter hat currentPhase)
@@ -116,6 +124,14 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
       sendAppMessage({ type: 'phase-stop' }, '*');
     }
   }, [currentPhase, phaseSoundUrl, daily, meetingState, sendAppMessage]);
+
+  // Sende session-ending Countdown zum Partner (letzte 60 Sekunden)
+  useEffect(() => {
+    if (!daily || meetingState !== 'joined-meeting') return;
+    if (sessionTimeLeft !== null && sessionTimeLeft !== undefined && sessionTimeLeft <= 60 && sessionTimeLeft > 0) {
+      sendAppMessage({ type: 'session-ending', secondsLeft: sessionTimeLeft }, '*');
+    }
+  }, [sessionTimeLeft, daily, meetingState, sendAppMessage]);
 
   // Cleanup remote audio on unmount
   useEffect(() => {
