@@ -5,7 +5,9 @@ import SessionInviteBanner from './components/SessionInviteBanner';
 import Navigation from './components/Navigation';
 import AuthView from './components/auth/AuthView';
 import ErrorBoundary from './components/ErrorBoundary';
+import CategoryPicker from './components/CategoryPicker';
 import { fetchDyadPrompt } from './services/geminiService';
+import { getRandomQuestion } from './data/dyadQuestions';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SessionProvider } from './contexts/SessionContext';
@@ -29,8 +31,10 @@ const RouteFallback: React.FC = () => (
 // Home View Component
 const HomeView: React.FC = () => {
   const navigate = useNavigate();
-  const [dailyPrompt, setDailyPrompt] = useState<{question: string, context?: string} | null>(null);
+  const [dailyPrompt, setDailyPrompt] = useState<{question: string, context?: string, category?: string} | null>(null);
   const [isPromptLoading, setIsPromptLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [useAi, setUseAi] = useState(true);
   const { t } = useSettings();
   const { user } = useAuth();
 
@@ -39,8 +43,13 @@ const HomeView: React.FC = () => {
     const loadPrompt = async () => {
       setIsPromptLoading(true);
       try {
-        const data = await fetchDyadPrompt();
-        setDailyPrompt(data);
+        if (useAi) {
+          const data = await fetchDyadPrompt(selectedCategory || undefined);
+          setDailyPrompt(data);
+        } else {
+          const q = getRandomQuestion(selectedCategory || undefined);
+          setDailyPrompt({ question: q.text, category: q.category });
+        }
       } catch (err) {
         console.error('[HomeView] Prompt load error:', err);
       } finally {
@@ -48,7 +57,7 @@ const HomeView: React.FC = () => {
       }
     };
     loadPrompt();
-  }, [user]);
+  }, [user, selectedCategory, useAi]);
 
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6 pb-24 text-center fade-in">
@@ -68,23 +77,39 @@ const HomeView: React.FC = () => {
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-[var(--c-text-muted)] mb-2">
             <Sparkles className="w-4 h-4 text-orange-400" />
             <span>{t.home.dailyImpulse}</span>
+            {dailyPrompt?.category && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--c-accent)]/10 text-[var(--c-accent)] normal-case tracking-normal">
+                {dailyPrompt.category}
+              </span>
+            )}
           </div>
-          
+
           {isPromptLoading ? (
             <div className="animate-pulse space-y-2">
               <div className="h-4 bg-[var(--c-border)] rounded w-3/4"></div>
               <div className="h-4 bg-[var(--c-border)] rounded w-1/2"></div>
             </div>
-          ) : (
+          ) : dailyPrompt ? (
             <>
-              <h3 className="text-2xl font-serif text-[var(--c-text-main)] leading-tight">"{dailyPrompt?.question}"</h3>
-              {dailyPrompt?.context && <p className="text-[var(--c-text-muted)] text-sm font-light leading-relaxed">{dailyPrompt.context}</p>}
+              <h3 className="text-2xl font-serif text-[var(--c-text-main)] leading-tight">&ldquo;{dailyPrompt.question}&rdquo;</h3>
+              {dailyPrompt.context && <p className="text-[var(--c-text-muted)] text-sm font-light leading-relaxed">{dailyPrompt.context}</p>}
             </>
-          )}
+          ) : null}
+        </div>
+
+        {/* Category Picker */}
+        <div className="bg-[var(--c-bg-card)]/50 backdrop-blur-sm p-5 rounded-2xl border border-[var(--c-border)]">
+          <CategoryPicker
+            selectedCategory={selectedCategory}
+            onSelect={setSelectedCategory}
+            showAiToggle={true}
+            useAi={useAi}
+            onToggleAi={setUseAi}
+          />
         </div>
 
         {/* Main Call to Action */}
-        <button 
+        <button
           onClick={() => navigate('/connect')}
           className="w-full py-5 px-6 bg-[var(--c-accent)] text-[var(--c-accent-fg)] rounded-2xl font-medium hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-between group"
         >
@@ -99,8 +124,8 @@ const HomeView: React.FC = () => {
           </div>
           <ChevronRight className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
         </button>
-        
-        <button 
+
+        <button
           onClick={() => navigate('/instructions')}
           className="w-full py-4 px-6 bg-[var(--c-bg-card)]/50 text-[var(--c-text-muted)] border border-[var(--c-border)] rounded-2xl font-medium hover:bg-[var(--c-bg-card)] hover:text-[var(--c-text-main)] transition-colors flex items-center justify-center gap-2"
         >
