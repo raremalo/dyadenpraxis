@@ -16,8 +16,9 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptRespo
       category = DYAD_CATEGORIES[Math.floor(Math.random() * DYAD_CATEGORIES.length)];
     }
 
-    // Pick up to 3 example questions from the category
-    const examples = category.questions.slice(0, 3);
+    // Pick up to 3 random example questions from the category
+    const shuffled = [...category.questions].sort(() => Math.random() - 0.5);
+    const examples = shuffled.slice(0, 3);
     const exampleLines = examples.map(q => `- "${q}"`).join('\n');
 
     const prompt = `Du bist ein Experte für Dyadenpraxis — eine kontemplative Kommunikationsform, entwickelt von Charles Berner (Enlightenment Intensive) und wissenschaftlich fundiert durch Prof. Dr. Tania Singers ReConnect! Programm.

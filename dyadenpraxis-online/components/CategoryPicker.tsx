@@ -1,5 +1,6 @@
 import React from 'react';
 import { DYAD_CATEGORIES } from '../data/dyadQuestions';
+import { useSettings } from '../contexts/SettingsContext';
 import { Shuffle } from 'lucide-react';
 
 interface CategoryPickerProps {
@@ -17,10 +18,12 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
   useAi = true,
   onToggleAi,
 }) => {
+  const { t } = useSettings();
+
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium uppercase tracking-widest text-[var(--c-text-muted)] mb-2">
-        Kategorie
+        {t.home.category}
       </p>
 
       {/* Category Grid */}
@@ -35,7 +38,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
           }`}
         >
           <Shuffle className="w-4 h-4 flex-shrink-0" />
-          <span className="leading-tight text-center">Zufällig</span>
+          <span className="leading-tight text-center">{t.home.random}</span>
         </button>
 
         {/* Category buttons */}
@@ -59,7 +62,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
       {showAiToggle && onToggleAi && (
         <div className="flex items-center justify-between pt-1">
           <span className="text-xs text-[var(--c-text-muted)]">
-            {useAi ? 'KI-generierte Frage' : 'Bewährte Frage'}
+            {useAi ? t.home.aiGenerated : t.home.curated}
           </span>
           <button
             onClick={() => onToggleAi(!useAi)}
