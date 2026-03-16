@@ -57,6 +57,7 @@ export interface GongEvent {
 export interface PromptResponse {
   question: string;
   context?: string;
+  category?: string;
 }
 
 export interface UserProfile {
