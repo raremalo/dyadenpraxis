@@ -16,6 +16,10 @@ export const translations = {
       quickMatch: 'Schnellverbindung',
       howItWorks: 'Wie es funktioniert',
       start: 'Jetzt starten',
+      category: 'Kategorie',
+      random: 'Zufällig',
+      aiGenerated: 'KI-generierte Frage',
+      curated: 'Bewährte Frage',
     },
     profile: {
       minutes: 'Minuten',
@@ -335,6 +339,10 @@ export const translations = {
       quickMatch: 'Quick Match',
       howItWorks: 'How it works',
       start: 'Start now',
+      category: 'Category',
+      random: 'Random',
+      aiGenerated: 'AI-generated question',
+      curated: 'Curated question',
     },
     profile: {
       minutes: 'Minutes',
