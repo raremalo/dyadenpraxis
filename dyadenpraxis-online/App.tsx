@@ -41,7 +41,7 @@ const HomeView: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    const loadPrompt = async () => {
+    const timer = setTimeout(async () => {
       setIsPromptLoading(true);
       try {
         if (useAi) {
@@ -52,13 +52,12 @@ const HomeView: React.FC = () => {
           if (!cancelled) setDailyPrompt({ question: q.text, category: q.category });
         }
       } catch (err) {
-        if (!cancelled) console.error('[HomeView] Prompt load error:', err);
+        if (!cancelled) console.error('[HomeView] Prompt load error:', err instanceof Error ? err.message : 'Unknown error');
       } finally {
         if (!cancelled) setIsPromptLoading(false);
       }
-    };
-    loadPrompt();
-    return () => { cancelled = true; };
+    }, 400);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [user, selectedCategory, useAi]);
 
   return (
