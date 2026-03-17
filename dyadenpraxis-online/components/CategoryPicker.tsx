@@ -22,45 +22,40 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-medium uppercase tracking-widest text-[var(--c-text-muted)] mb-2">
-        {t.home.category}
-      </p>
-
-      {/* Category Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-        {/* Random / All button */}
+      {/* Category Chips */}
+      <div className="flex flex-wrap gap-2">
+        {/* Random / All chip */}
         <button
           onClick={() => onSelect(null)}
-          className={`flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl text-xs font-medium min-h-[56px] transition-all duration-200 border ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
             selectedCategory === null
               ? 'bg-[var(--c-accent)]/10 border-[var(--c-accent)] text-[var(--c-accent)]'
-              : 'bg-[var(--c-bg-card)]/50 border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-accent)]/40 hover:text-[var(--c-text-main)]'
+              : 'bg-transparent border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
           }`}
         >
-          <Shuffle className="w-4 h-4 flex-shrink-0" />
-          <span className="leading-tight text-center">{t.home.random}</span>
+          <Shuffle className="w-3.5 h-3.5" />
+          <span>{t.home.random}</span>
         </button>
 
-        {/* Category buttons */}
+        {/* Category chips */}
         {DYAD_CATEGORIES.map((cat) => (
           <button
             key={cat.key}
             onClick={() => onSelect(cat.key)}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl text-xs font-medium min-h-[56px] transition-all duration-200 border ${
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
               selectedCategory === cat.key
                 ? 'bg-[var(--c-accent)]/10 border-[var(--c-accent)] text-[var(--c-accent)]'
-                : 'bg-[var(--c-bg-card)]/50 border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-accent)]/40 hover:text-[var(--c-text-main)]'
+                : 'bg-transparent border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
             }`}
           >
-            <span className="text-base leading-none">{cat.icon}</span>
-            <span className="leading-tight text-center line-clamp-2">{cat.name}</span>
+            {cat.name}
           </button>
         ))}
       </div>
 
       {/* AI Toggle */}
       {showAiToggle && onToggleAi && (
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-end gap-2">
           <span className="text-xs text-[var(--c-text-muted)]">
             {useAi ? t.home.aiGenerated : t.home.curated}
           </span>

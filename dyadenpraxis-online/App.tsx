@@ -99,15 +99,13 @@ const HomeView: React.FC = () => {
         </div>
 
         {/* Category Picker */}
-        <div className="bg-[var(--c-bg-card)]/50 backdrop-blur-sm p-5 rounded-2xl border border-[var(--c-border)]">
-          <CategoryPicker
-            selectedCategory={selectedCategory}
-            onSelect={setSelectedCategory}
-            showAiToggle={true}
-            useAi={useAi}
-            onToggleAi={setUseAi}
-          />
-        </div>
+        <CategoryPicker
+          selectedCategory={selectedCategory}
+          onSelect={setSelectedCategory}
+          showAiToggle={true}
+          useAi={useAi}
+          onToggleAi={setUseAi}
+        />
 
         {/* Main Call to Action */}
         <button
