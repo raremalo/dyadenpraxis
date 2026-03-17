@@ -40,3 +40,7 @@ lerna-debug.log*
 
 # Supabase
 supabase/.temp/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db

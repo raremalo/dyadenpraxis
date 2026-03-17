@@ -1,4 +1,7 @@
 {
-  "database": "beads.db",
-  "jsonl_export": "issues.jsonl"
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "dyaden_praxis",
+  "project_id": "34da5f57-3753-4600-949c-5c5427859724"
 }
