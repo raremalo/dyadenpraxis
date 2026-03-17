@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Loader2, User, CheckCircle2, Search, X, Clock,
-  ChevronRight, Users, AlertCircle, RefreshCw
+  ChevronRight, Users, AlertCircle, RefreshCw, Zap
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
