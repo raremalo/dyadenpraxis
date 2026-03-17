@@ -10,10 +10,7 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+      define: {},
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
@@ -27,7 +24,7 @@ export default defineConfig(({ mode }) => {
               'vendor-supabase': ['@supabase/supabase-js'],
               'vendor-ui': ['lucide-react'],
               'vendor-daily': ['@daily-co/daily-js'],
-              'vendor-genai': ['@google/genai'],
+              // @google/genai moved to server-side API proxy
             },
           },
         },
