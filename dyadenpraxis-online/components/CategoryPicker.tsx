@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DYAD_CATEGORIES } from '../data/dyadQuestions';
 import { useSettings } from '../contexts/SettingsContext';
-import { Shuffle } from 'lucide-react';
+import { Shuffle, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CategoryPickerProps {
   selectedCategory: string | null; // null = random/all
@@ -19,39 +19,68 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
   onToggleAi,
 }) => {
   const { t } = useSettings();
+  const [expanded, setExpanded] = useState(false);
+
+  const selectedCat = DYAD_CATEGORIES.find(c => c.key === selectedCategory);
+
+  const handleCategorySelect = (key: string | null) => {
+    onSelect(key);
+    setExpanded(false);
+  };
+
+  const chipBase = 'inline-flex items-center px-3 py-1.5 rounded-full text-sm transition-all duration-200 border whitespace-nowrap';
+  const chipActive = 'bg-[var(--c-accent)]/10 border-[var(--c-accent)] text-[var(--c-accent)]';
+  const chipInactive = 'bg-transparent border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-text-muted)] hover:text-[var(--c-text-main)]';
 
   return (
     <div className="space-y-3">
-      {/* Category Chips */}
-      <div className="flex flex-wrap gap-2">
-        {/* Random / All chip */}
+      {/* Compact row: Zufaellig + active category + expand toggle */}
+      <div className="flex items-center gap-2">
         <button
-          onClick={() => onSelect(null)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
-            selectedCategory === null
-              ? 'bg-[var(--c-accent)]/10 border-[var(--c-accent)] text-[var(--c-accent)]'
-              : 'bg-transparent border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
+          onClick={() => handleCategorySelect(null)}
+          className={`${chipBase} gap-1.5 font-medium ${
+            selectedCategory === null ? chipActive : chipInactive
           }`}
         >
           <Shuffle className="w-3.5 h-3.5" />
           <span>{t.home.random}</span>
         </button>
 
-        {/* Category chips */}
-        {DYAD_CATEGORIES.map((cat) => (
+        {selectedCat && (
           <button
-            key={cat.key}
-            onClick={() => onSelect(cat.key)}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
-              selectedCategory === cat.key
-                ? 'bg-[var(--c-accent)]/10 border-[var(--c-accent)] text-[var(--c-accent)]'
-                : 'bg-transparent border-[var(--c-border)] text-[var(--c-text-muted)] hover:border-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
-            }`}
+            onClick={() => handleCategorySelect(selectedCat.key)}
+            className={`${chipBase} font-medium ${chipActive}`}
           >
-            {cat.name}
+            {selectedCat.name}
           </button>
-        ))}
+        )}
+
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="ml-auto inline-flex items-center gap-1 px-2 py-1.5 text-xs text-[var(--c-text-muted)] hover:text-[var(--c-text-main)] transition-colors"
+          aria-expanded={expanded}
+        >
+          <span>{expanded ? (t.home.lessCategories || 'Weniger') : (t.home.moreCategories || 'Kategorien')}</span>
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
       </div>
+
+      {/* Expanded category list */}
+      {expanded && (
+        <div className="flex flex-wrap gap-1.5 pt-1 animate-[fadeIn_200ms_ease-out]">
+          {DYAD_CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => handleCategorySelect(cat.key)}
+              className={`${chipBase} text-xs ${
+                selectedCategory === cat.key ? chipActive : chipInactive
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* AI Toggle */}
       {showAiToggle && onToggleAi && (
