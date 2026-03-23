@@ -161,6 +161,7 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
 
   const loadRecommended = useCallback(async () => {
     if (!user) return;
+    setError(null);
 
     try {
       const { data, error: rpcError } = await supabase.rpc('get_recommended_partners', {
@@ -171,7 +172,9 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
       if (rpcError) throw new Error(rpcError.message);
       setRecommended((data || []) as Partner[]);
     } catch (err) {
-      console.error('Empfehlungen laden fehlgeschlagen:', err);
+      const msg = err instanceof Error ? err.message : 'Empfehlungen laden fehlgeschlagen';
+      console.error('[usePartnerSearch] loadRecommended:', msg);
+      setError(msg);
     }
   }, [user]);
 

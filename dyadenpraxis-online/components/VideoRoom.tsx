@@ -378,11 +378,7 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
     );
   }
 
-  // Joined — show video tiles
-  const allParticipantIds = localSessionId && !hideSelf
-    ? [localSessionId, ...remoteParticipantIds]
-    : remoteParticipantIds;
-
+  // Joined — PIP layout: remote video fullscreen, self-view as small overlay
   return (
     <div
       ref={containerRef}
@@ -394,28 +390,52 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
         ''
       }`}
     >
-      {/* Video Grid */}
-      <div className={`flex-1 min-h-0 grid gap-2 p-2 ${
-        allParticipantIds.length <= 1 ? 'grid-cols-1' :
-        allParticipantIds.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
-        'grid-cols-2'
-      }`}>
-        {allParticipantIds.map((id) => (
-          <div key={id} className="relative rounded-xl overflow-hidden bg-black">
+      {/* Partner Video — full area */}
+      <div className="flex-1 min-h-0 relative">
+        {remoteParticipantIds.length > 0 ? (
+          <div className="absolute inset-0 rounded-xl overflow-hidden bg-black m-2">
+            {remoteParticipantIds.map((id) => (
+              <DailyVideo
+                key={id}
+                sessionId={id}
+                type="video"
+                automirror
+                fit="cover"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center m-2 rounded-xl bg-black/80">
+            <div className="text-center text-white/60">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+              <p className="text-sm">{t.video?.waitingForPartner || 'Warte auf Partner...'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Self-View PIP — small overlay bottom-right */}
+        {localSessionId && !hideSelf && (
+          <button
+            onClick={() => setHideSelf(true)}
+            className="absolute bottom-4 right-4 w-28 h-36 md:w-36 md:h-48 rounded-xl overflow-hidden bg-black border-2 border-white/20 shadow-lg z-10 cursor-pointer group transition-transform hover:scale-105"
+            title={t.video?.hideSelf || 'Eigenes Video ausblenden'}
+          >
             <DailyVideo
-              sessionId={id}
+              sessionId={localSessionId}
               type="video"
               automirror
               fit="cover"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-            {id === localSessionId && (
-              <span className="absolute bottom-2 left-2 text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">
-                Du
-              </span>
-            )}
-          </div>
-        ))}
+            <span className="absolute bottom-1.5 left-1.5 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded-full">
+              Du
+            </span>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <EyeOff className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Settings Panel (overlay above controls) */}
@@ -528,21 +548,6 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
             </button>
           </div>
 
-          {/* Eigenes Video ausblenden */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.selfView || 'Eigenes Video'}</label>
-            <button
-              onClick={() => setHideSelf(!hideSelf)}
-              className={`w-full py-2 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                hideSelf
-                  ? 'bg-rose-500/15 text-rose-500'
-                  : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
-              }`}
-            >
-              {hideSelf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              {hideSelf ? (t.video?.selfHidden || 'Ausgeblendet') : (t.video?.selfVisible || 'Sichtbar')}
-            </button>
-          </div>
         </div>
       )}
 
@@ -550,7 +555,7 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
       <div className="flex items-center justify-center gap-3 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
         {/* Participants count */}
         <span className="text-sm text-[var(--c-text-muted)] mr-auto">
-          {allParticipantIds.length} {t.video?.participants || 'Teilnehmer'}
+          {remoteParticipantIds.length + (localSessionId ? 1 : 0)} {t.video?.participants || 'Teilnehmer'}
         </span>
 
         {/* Phase indicator — speaker/listener (lokal oder via AppMessage vom Partner) */}
@@ -595,6 +600,19 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
           title={t.video?.settings || 'Einstellungen'}
         >
           <Settings className="w-5 h-5" />
+        </button>
+
+        {/* Self-view toggle */}
+        <button
+          onClick={() => setHideSelf(!hideSelf)}
+          className={`p-3 rounded-full transition-colors ${
+            hideSelf
+              ? 'bg-amber-500/20 text-amber-500'
+              : 'bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)]'
+          }`}
+          title={hideSelf ? (t.video?.showSelf || 'Eigenes Video einblenden') : (t.video?.hideSelf || 'Eigenes Video ausblenden')}
+        >
+          {hideSelf ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
         </button>
 
         {/* Audio toggle */}
