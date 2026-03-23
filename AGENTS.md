@@ -1,3 +1,61 @@
+<!-- Generated: 2026-03-23 | Updated: 2026-03-23 -->
+
+# Dyaden-Praxis
+
+## Purpose
+A web application for online dyad meditation practice — structured two-person contemplation sessions with real-time video, timed speaking/listening roles, and AI-generated prompts. Built with React 19, Supabase, Daily.co video, and Gemini AI. Deployed on Vercel.
+
+## Key Files
+
+| File | Description |
+|------|-------------|
+| `NEXT_APP_STARTER.md` | Reference starter template |
+| `Dyaden Praxis Guide.html` | Original practice guide |
+| `selbst_validierend_claude.md` | Self-validating agent concept doc |
+
+## Subdirectories
+
+| Directory | Purpose |
+|-----------|---------|
+| `dyadenpraxis-online/` | Main application — Vite + React + TypeScript SPA (see `dyadenpraxis-online/AGENTS.md`) |
+| `migrations/` | Canonical SQL migration sequence for Supabase (see `migrations/AGENTS.md`) |
+| `docs/` | Architecture documentation (see `docs/AGENTS.md`) |
+| `validators/` | Hook-driven quality gate scripts (see `validators/AGENTS.md`) |
+| `sound/` | Meditation bell/bowl audio assets (see `sound/AGENTS.md`) |
+| `supabase/` | Supabase project config (linked config, mostly empty) |
+
+## For AI Agents
+
+### Working In This Directory
+- Read this file fully before starting any work
+- Use `bd` (beads) for all issue tracking — never markdown TODOs
+- All user-facing text is in German (Zielgruppe: German speakers)
+- Run quality gates before every commit (see Selbst-Validierung below)
+
+### Testing Requirements
+```bash
+cd dyadenpraxis-online && npx tsc --noEmit   # TypeScript fehlerfrei
+cd dyadenpraxis-online && npx vite build      # Build erfolgreich
+cd dyadenpraxis-online && npx vitest run      # Tests passing
+```
+
+### Tech Stack
+- **Frontend**: React 19, TypeScript 5.8, Vite 6, Tailwind CSS 4
+- **Backend**: Supabase (Auth, DB, Realtime, Storage, Edge Functions)
+- **Video**: Daily.co (`@daily-co/daily-js`, `@daily-co/daily-react`)
+- **AI Prompts**: Google Gemini via Vercel API routes
+- **Deployment**: Vercel (Hobby Plan)
+
+## Dependencies
+
+### External Services
+- Supabase — auth, database, realtime presence, storage
+- Daily.co — WebRTC video rooms
+- Google Gemini — AI-generated dyad prompts
+- Vercel — hosting and serverless API routes
+
+---
+
 # Agent Instructions
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
@@ -235,3 +293,5 @@ For more details, see README.md and docs/QUICKSTART.md.
 - If push fails, resolve and retry until it succeeds
 
 <!-- END BEADS INTEGRATION -->
+
+<!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
