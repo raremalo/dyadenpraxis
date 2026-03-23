@@ -19,7 +19,7 @@ type Phase = 'searching' | 'selecting' | 'configuring' | 'requesting' | 'waiting
 const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }) => {
   const { t } = useSettings();
   const { user, onlineUserIds } = useAuth();
-  const { recommended, loadRecommended, isLoading: searchLoading } = usePartnerSearch();
+  const { recommended, loadRecommended, isLoading: searchLoading, error: searchError } = usePartnerSearch();
   const {
     requestSession,
     currentSession,
@@ -160,7 +160,23 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
 
           {/* Partner List */}
           <div className="flex-1 overflow-y-auto space-y-3 pb-24">
-            {searchLoading && onlinePartners.length === 0 ? (
+            {searchError ? (
+              <div className="text-center py-16">
+                <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-[var(--c-text-main)] mb-2">
+                  {t.partner?.connectionError || 'Verbindungsfehler'}
+                </h3>
+                <p className="text-[var(--c-text-muted)] text-sm mb-4">
+                  {t.partner?.tryAgain || 'Bitte versuche es erneut'}
+                </p>
+                <button
+                  onClick={handleRefresh}
+                  className="px-4 py-2 bg-[var(--c-accent)] text-[var(--c-accent-fg)] rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+                >
+                  {t.partner?.retry || 'Erneut versuchen'}
+                </button>
+              </div>
+            ) : searchLoading && onlinePartners.length === 0 ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-8 h-8 text-[var(--c-accent)] animate-spin" />
               </div>

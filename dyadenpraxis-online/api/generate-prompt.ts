@@ -102,12 +102,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many requests' });
   }
 
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
-    return res.status(500).json({ error: 'API not configured' });
-  }
-
   try {
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
+    }
+
     let { categoryKey } = req.body || {};
 
     // Validate categoryKey against allowlist
