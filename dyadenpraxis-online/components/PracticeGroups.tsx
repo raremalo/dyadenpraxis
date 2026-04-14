@@ -4,7 +4,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
 
-const Groups: React.FC = () => {
+const PracticeGroups: React.FC = () => {
   const { t } = useSettings();
   const { user } = useAuth();
   const {
@@ -161,4 +161,4 @@ const Groups: React.FC = () => {
   );
 };
 
-export default Groups;
+export default PracticeGroups;

@@ -155,7 +155,7 @@ export function usePeerVerification(): UsePeerVerificationReturn {
       
       return data?.is_active || false;
     } catch (err) {
-      console.error('hasVerified check failed:', err);
+      console.error('[PeerVerification] Verifizierungsstatus prüfen fehlgeschlagen:', err);
       return false;
     }
   }, [user]);
@@ -176,7 +176,7 @@ export function usePeerVerification(): UsePeerVerificationReturn {
       if (fetchError) throw new Error(fetchError.message);
       return data || [];
     } catch (err) {
-      console.error('getVerificationsFor failed:', err);
+      console.error('[PeerVerification] Verifizierungen laden fehlgeschlagen:', err);
       return [];
     }
   }, []);
@@ -196,7 +196,7 @@ export function usePeerVerification(): UsePeerVerificationReturn {
       if (fetchError) throw new Error(fetchError.message);
       return data || [];
     } catch (err) {
-      console.error('getMyVerifications failed:', err);
+      console.error('[PeerVerification] Eigene Verifizierungen laden fehlgeschlagen:', err);
       return [];
     }
   }, [user]);
@@ -256,7 +256,7 @@ export function usePeerVerification(): UsePeerVerificationReturn {
         progress_to_next: progressToNext,
       };
     } catch (err) {
-      console.error('getVerificationStats failed:', err);
+      console.error('[PeerVerification] Verifizierungsstatistiken laden fehlgeschlagen:', err);
       return null;
     }
   }, []);
@@ -336,7 +336,7 @@ export function usePeerVerification(): UsePeerVerificationReturn {
       
       return !!data;
     } catch (err) {
-      console.error('isBlocked check failed:', err);
+      console.error('[PeerVerification] Blockierungsstatus prüfen fehlgeschlagen:', err);
       return false;
     }
   }, [user]);
@@ -355,7 +355,7 @@ export function usePeerVerification(): UsePeerVerificationReturn {
       if (fetchError) throw new Error(fetchError.message);
       return data || [];
     } catch (err) {
-      console.error('getBlockedUsers failed:', err);
+      console.error('[PeerVerification] Blockierte Nutzer laden fehlgeschlagen:', err);
       return [];
     }
   }, [user]);

@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-23 | Updated: 2026-03-23 -->
+<!-- Generated: 2026-03-23 | Updated: 2026-04-14 -->
 
 # Dyaden-Praxis
 
@@ -9,6 +9,9 @@ A web application for online dyad meditation practice — structured two-person 
 
 | File | Description |
 |------|-------------|
+| `README.md` | Project overview, setup instructions, tech stack |
+| `CONTRIBUTING.md` | Contribution guidelines for OSS contributors |
+| `LICENSE` | AGPL-3.0 license |
 | `NEXT_APP_STARTER.md` | Reference starter template |
 | `Dyaden Praxis Guide.html` | Original practice guide |
 | `selbst_validierend_claude.md` | Self-validating agent concept doc |
@@ -17,6 +20,7 @@ A web application for online dyad meditation practice — structured two-person 
 
 | Directory | Purpose |
 |-----------|---------|
+| `.github/` | GitHub issue templates (bug report, feature request) |
 | `dyadenpraxis-online/` | Main application — Vite + React + TypeScript SPA (see `dyadenpraxis-online/AGENTS.md`) |
 | `migrations/` | Canonical SQL migration sequence for Supabase (see `migrations/AGENTS.md`) |
 | `docs/` | Architecture documentation (see `docs/AGENTS.md`) |

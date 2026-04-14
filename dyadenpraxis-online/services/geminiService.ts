@@ -25,7 +25,7 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptRespo
     return data;
 
   } catch (error) {
-    console.error("Error fetching prompt:", error instanceof Error ? error.message : "Unknown error");
+    console.error('[GeminiService] Prompt abrufen fehlgeschlagen:', error instanceof Error ? error.message : "Unknown error");
     // Fallback to local pool
     const fallback = getRandomQuestion(categoryKey);
     return {

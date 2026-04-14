@@ -99,7 +99,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       const registration = await navigator.serviceWorker.ready;
       return registration;
     } catch (err) {
-      console.error('Service Worker nicht bereit:', err);
+      console.error('[usePushNotifications] Service Worker nicht bereit:', err);
       return null;
     }
   }, [isSupported]);
@@ -118,7 +118,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       setPermission(result as NotificationPermissionState);
       return result === 'granted';
     } catch (err) {
-      console.error('Permission-Anfrage fehlgeschlagen:', err);
+      console.error('[usePushNotifications] Permission-Anfrage fehlgeschlagen:', err);
       setError('Berechtigung konnte nicht angefordert werden');
       return false;
     }
@@ -234,7 +234,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         });
 
       if (dbError) {
-        console.error('Subscription speichern fehlgeschlagen:', dbError);
+        console.error('[usePushNotifications] Subscription speichern fehlgeschlagen:', dbError);
         setError('Subscription konnte nicht gespeichert werden');
         return false;
       }
@@ -242,7 +242,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       setIsSubscribed(true);
       return true;
     } catch (err) {
-      console.error('Subscribe fehlgeschlagen:', err);
+      console.error('[usePushNotifications] Subscribe fehlgeschlagen:', err);
       setError('Subscription fehlgeschlagen');
       return false;
     } finally {
@@ -278,7 +278,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         .eq('user_id', user.id);
 
       if (dbError) {
-        console.error('Subscription löschen fehlgeschlagen:', dbError);
+        console.error('[usePushNotifications] Subscription löschen fehlgeschlagen:', dbError);
         setError('Subscription konnte nicht entfernt werden');
         return false;
       }
@@ -286,7 +286,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       setIsSubscribed(false);
       return true;
     } catch (err) {
-      console.error('Unsubscribe fehlgeschlagen:', err);
+      console.error('[usePushNotifications] Unsubscribe fehlgeschlagen:', err);
       setError('Abmeldung fehlgeschlagen');
       return false;
     } finally {

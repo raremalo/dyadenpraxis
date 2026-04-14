@@ -100,7 +100,7 @@ export function useDispute(): UseDisputeReturn {
       if (fetchError) throw new Error(fetchError.message);
       return (data || []) as Dispute[];
     } catch (err) {
-      console.error('Meine Meldungen laden fehlgeschlagen:', err);
+      console.error('[useDispute] Meine Meldungen laden fehlgeschlagen:', err);
       return [];
     }
   }, [user]);
@@ -118,7 +118,7 @@ export function useDispute(): UseDisputeReturn {
       if (fetchError) throw new Error(fetchError.message);
       return (data || []) as Dispute[];
     } catch (err) {
-      console.error('Meldungen gegen mich laden fehlgeschlagen:', err);
+      console.error('[useDispute] Meldungen gegen mich laden fehlgeschlagen:', err);
       return [];
     }
   }, [user]);

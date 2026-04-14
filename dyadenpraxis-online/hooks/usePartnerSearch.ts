@@ -190,7 +190,7 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
       if (rpcError) throw new Error(rpcError.message);
       setRecent((data || []) as Partner[]);
     } catch (err) {
-      console.error('Letzte Partner laden fehlgeschlagen:', err);
+      console.error('[usePartnerSearch] Letzte Partner laden fehlgeschlagen:', err);
     }
   }, [user]);
 

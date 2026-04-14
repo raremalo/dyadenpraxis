@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { usePresence } from '../hooks/usePresence';
 
-export interface Profile {
+export interface DbUserProfile {
   id: string;
   name: string;
   email: string;
@@ -25,14 +25,14 @@ export interface Profile {
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: Profile | null;
+  profile: DbUserProfile | null;
   initialized: boolean;
   loading: boolean;
   onlineUserIds: Set<string>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<{ error: string | null }>;
+  updateProfile: (updates: Partial<DbUserProfile>) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -41,7 +41,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<DbUserProfile | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -56,10 +56,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .single();
 
     if (error) {
-      console.error('Profil laden fehlgeschlagen:', error.message);
+      console.error('[Auth] Profil laden fehlgeschlagen:', error.message);
       return null;
     }
-    return data as Profile;
+    return data as DbUserProfile;
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -169,7 +169,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setProfile(null);
   }, []);
 
-  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
+  const updateProfile = useCallback(async (updates: Partial<DbUserProfile>) => {
     if (!user) return { error: 'Nicht angemeldet' };
     const { error } = await supabase
       .from('profiles')

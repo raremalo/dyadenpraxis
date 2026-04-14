@@ -6,7 +6,7 @@ import { useAvatarUpload } from '../hooks/useAvatarUpload';
 import { useAccountDeletion } from '../hooks/useAccountDeletion';
 import { NotificationPermission } from './NotificationPermission';
 
-const Profile: React.FC = () => {
+const UserProfile: React.FC = () => {
   const { t, theme, setTheme, language, setLanguage } = useSettings();
   const { profile, signOut, refreshProfile, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -252,4 +252,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile;
+export default UserProfile;
