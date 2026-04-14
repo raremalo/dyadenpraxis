@@ -1,8 +1,8 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import Instructions from './components/Instructions';
+import DyadInstructions from './components/DyadInstructions';
 import SessionInviteBanner from './components/SessionInviteBanner';
-import Navigation from './components/Navigation';
+import AppNavigation from './components/AppNavigation';
 import AuthView from './components/auth/AuthView';
 import ErrorBoundary from './components/ErrorBoundary';
 import CategoryPicker from './components/CategoryPicker';
@@ -16,9 +16,9 @@ import { Wind, Users, BookOpen, Sparkles, ChevronRight, Loader2 } from 'lucide-r
 // Lazy-loaded Route-Komponenten
 const PartnerConnect = React.lazy(() => import('./components/PartnerConnect'));
 const ActiveSession = React.lazy(() => import('./components/ActiveSession'));
-const Profile = React.lazy(() => import('./components/Profile'));
+const UserProfile = React.lazy(() => import('./components/UserProfile'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
-const Groups = React.lazy(() => import('./components/Groups'));
+const PracticeGroups = React.lazy(() => import('./components/PracticeGroups'));
 const PartnerFinder = React.lazy(() => import('./components/PartnerFinder'));
 
 // Suspense-Fallback
@@ -183,7 +183,7 @@ const AppContent: React.FC = () => {
         >
           <Routes>
             <Route path="/" element={<HomeView />} />
-            <Route path="/instructions" element={<Instructions onBack={() => navigate('/')} />} />
+            <Route path="/instructions" element={<DyadInstructions onBack={() => navigate('/')} />} />
             <Route path="/connect" element={
               <ErrorBoundary
                 fallbackTitle="Verbindungsfehler"
@@ -217,9 +217,9 @@ const AppContent: React.FC = () => {
                 </Suspense>
               </ErrorBoundary>
             } />
-            <Route path="/profile" element={<Suspense fallback={<RouteFallback />}><Profile /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={<RouteFallback />}><UserProfile /></Suspense>} />
             <Route path="/calendar" element={<Suspense fallback={<RouteFallback />}><Calendar /></Suspense>} />
-            <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><Groups /></Suspense>} />
+            <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><PracticeGroups /></Suspense>} />
             <Route path="/partner-finder" element={<Suspense fallback={<RouteFallback />}><PartnerFinder onQuickMatch={() => navigate('/connect')} onSelectPartner={(partner) => navigate('/connect', { state: { selectedPartner: partner } })} /></Suspense>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -227,7 +227,7 @@ const AppContent: React.FC = () => {
       </div>
 
       {/* Navigation */}
-      {!hideNav && <Navigation />}
+      {!hideNav && <AppNavigation />}
     </div>
   );
 };

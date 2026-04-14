@@ -14,6 +14,7 @@ vi.mock('../lib/supabase', () => ({
     },
     auth: {
       signOut: vi.fn().mockResolvedValue({}),
+      refreshSession: vi.fn().mockResolvedValue({ error: { message: 'Token expired' } }),
     },
   },
 }));
@@ -100,7 +101,7 @@ describe('useVideoCall', () => {
     });
 
     expect(response).toBeNull();
-    expect(result.current.error).toBe('Sitzung abgelaufen. Bitte erneut anmelden.');
+    expect(result.current.error).toBe('Sitzung abgelaufen. Bitte Seite neu laden.');
   });
 
   it('checkMediaPermissions gibt true bei Erfolg zurueck', async () => {

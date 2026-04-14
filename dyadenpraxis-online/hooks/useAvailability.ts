@@ -197,7 +197,7 @@ export function useAvailability(): UseAvailabilityReturn {
       if (fetchError) throw new Error(fetchError.message);
       return data || [];
     } catch (err) {
-      console.error('Partner slots laden fehlgeschlagen:', err);
+      console.error('[useAvailability] Partner slots laden fehlgeschlagen:', err);
       return [];
     }
   }, []);
@@ -254,7 +254,7 @@ export function useAvailability(): UseAvailabilityReturn {
         return a.start_time.localeCompare(b.start_time);
       });
     } catch (err) {
-      console.error('Ueberlappungen finden fehlgeschlagen:', err);
+      console.error('[useAvailability] Ueberlappungen finden fehlgeschlagen:', err);
       return [];
     }
   }, [user, loadPartnerSlots]);

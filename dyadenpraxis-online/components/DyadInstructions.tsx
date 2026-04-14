@@ -1,11 +1,11 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
-interface InstructionsProps {
+interface DyadInstructionsProps {
   onBack: () => void;
 }
 
-const Instructions: React.FC<InstructionsProps> = ({ onBack }) => {
+const DyadInstructions: React.FC<DyadInstructionsProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-[var(--c-bg-app)] text-[var(--c-text-main)] p-6 md:p-12">
       <div className="max-w-2xl mx-auto space-y-8 fade-in">
@@ -142,4 +142,4 @@ const Instructions: React.FC<InstructionsProps> = ({ onBack }) => {
   );
 };
 
-export default Instructions;
+export default DyadInstructions;

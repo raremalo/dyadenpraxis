@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
 
     if (!roomResponse.ok) {
       const errData = await roomResponse.text();
-      console.error("Daily.co Room-Erstellung fehlgeschlagen:", errData);
+      console.error("[create-room] Daily.co Room-Erstellung fehlgeschlagen:", errData);
       return new Response(
         JSON.stringify({ error: "Video-Room konnte nicht erstellt werden" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -190,7 +190,7 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (err) {
-    console.error("create-room Fehler:", err);
+    console.error("[create-room] Fehler:", err);
     return new Response(
       JSON.stringify({ error: "Interner Fehler" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

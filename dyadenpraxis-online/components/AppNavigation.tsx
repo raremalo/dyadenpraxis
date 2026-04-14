@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Calendar, Users, User, Search } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
-const Navigation: React.FC = () => {
+const AppNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useSettings();
@@ -42,4 +42,4 @@ const Navigation: React.FC = () => {
   );
 };
 
-export default Navigation;
+export default AppNavigation;

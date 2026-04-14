@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-23 | Updated: 2026-03-23 -->
+<!-- Generated: 2026-03-23 | Updated: 2026-04-14 -->
 
 # dyadenpraxis-online
 
@@ -23,6 +23,8 @@ Main application directory — a Vite-powered React 19 SPA for online dyad medit
 | `tailwind.config.js` | Tailwind CSS 4 configuration |
 | `postcss.config.js` | PostCSS with Tailwind plugin |
 | `vercel.json` | Vercel deployment config — API route rewrites |
+| `.env.example` | Environment variable template for local development |
+| `.gitignore` | Git ignore rules |
 
 ## Subdirectories
 

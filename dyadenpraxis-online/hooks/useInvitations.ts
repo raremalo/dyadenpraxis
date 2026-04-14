@@ -98,7 +98,7 @@ export function useInvitations(): UseInvitationsReturn {
       await navigator.clipboard.writeText(shareUrl);
       return true;
     } catch (err) {
-      console.error('Kopieren fehlgeschlagen:', err);
+      console.error('[useInvitations] Kopieren fehlgeschlagen:', err);
       return false;
     }
   }, [getShareUrl]);
@@ -235,7 +235,7 @@ export function useInvitations(): UseInvitationsReturn {
         is_valid: result.is_valid,
       };
     } catch (err) {
-      console.error('Token validieren fehlgeschlagen:', err);
+      console.error('[useInvitations] Token validieren fehlgeschlagen:', err);
       return null;
     }
   }, []);

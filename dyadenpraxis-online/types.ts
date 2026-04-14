@@ -76,7 +76,7 @@ export interface CalendarEvent {
   attendees: number;
 }
 
-export interface Group {
+export interface PracticeGroup {
   id: string;
   name: string;
   description: string;

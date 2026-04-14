@@ -53,6 +53,10 @@ async function createDailyRoom(name: string, expiresAt: number) {
       },
     }),
   });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Daily.co rooms API Fehler ${res.status}: ${errorText}`);
+  }
   return res.json();
 }
 
@@ -72,6 +76,10 @@ async function createMeetingToken(roomName: string, userId: string, expiresAt: n
       },
     }),
   });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Daily.co meeting-tokens API Fehler ${res.status}: ${errorText}`);
+  }
   return res.json();
 }
 
@@ -85,16 +93,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Methode nicht erlaubt' });
 
   // JWT Auth
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization' });
+    return res.status(401).json({ error: 'Autorisierung fehlt' });
   }
 
   const user = await verifyJWT(authHeader.slice(7));
-  if (!user) return res.status(401).json({ error: 'Invalid token' });
+  if (!user) return res.status(401).json({ error: 'Ungültiges Token' });
 
   try {
     const { sessionId, includeThird } = req.body;
@@ -120,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error) {
-    console.error('Daily.co API error:', error);
-    return res.status(500).json({ error: 'Room creation failed' });
+    console.error('[CreateRoom] Daily.co API Fehler:', error);
+    return res.status(500).json({ error: 'Room-Erstellung fehlgeschlagen' });
   }
 }

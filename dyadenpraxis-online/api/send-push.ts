@@ -137,7 +137,7 @@ async function sendPushNotification(
       return { success: false, error: errorText, statusCode: response.status };
     }
   } catch (error) {
-    console.error('Push send error:', error);
+    console.error('[SendPush] Push-Versand fehlgeschlagen:', error);
     return { success: false, error: String(error) };
   }
 }
@@ -154,16 +154,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Methode nicht erlaubt' });
 
   // JWT Auth
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization' });
+    return res.status(401).json({ error: 'Autorisierung fehlt' });
   }
 
   const user = await verifyJWT(authHeader.slice(7));
-  if (!user) return res.status(401).json({ error: 'Invalid token' });
+  if (!user) return res.status(401).json({ error: 'Ungültiges Token' });
 
   try {
     const { recipientIds, payload } = req.body as {
@@ -172,11 +172,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
 
     if (!recipientIds || !Array.isArray(recipientIds) || recipientIds.length === 0) {
-      return res.status(400).json({ error: 'recipientIds required' });
+      return res.status(400).json({ error: 'recipientIds erforderlich' });
     }
 
     if (!payload || !payload.title || !payload.body) {
-      return res.status(400).json({ error: 'payload with title and body required' });
+      return res.status(400).json({ error: 'payload mit title und body erforderlich' });
     }
 
     // Subscriptions für alle Empfänger laden
@@ -186,8 +186,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .in('user_id', recipientIds);
 
     if (dbError) {
-      console.error('DB error:', dbError);
-      return res.status(500).json({ error: 'Failed to load subscriptions' });
+      console.error('[SendPush] DB-Fehler:', dbError);
+      return res.status(500).json({ error: 'Abonnements konnten nicht geladen werden' });
     }
 
     if (!subscriptions || subscriptions.length === 0) {
@@ -231,7 +231,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       details: results,
     });
   } catch (error) {
-    console.error('Send push error:', error);
-    return res.status(500).json({ error: 'Push notification failed' });
+    console.error('[SendPush] Push-Benachrichtigung fehlgeschlagen:', error);
+    return res.status(500).json({ error: 'Push-Benachrichtigung fehlgeschlagen' });
   }
 }

@@ -56,16 +56,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Methode nicht erlaubt' });
 
   // JWT Auth
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization' });
+    return res.status(401).json({ error: 'Autorisierung fehlt' });
   }
 
   const user = await verifyJWT(authHeader.slice(7));
-  if (!user) return res.status(401).json({ error: 'Invalid token' });
+  if (!user) return res.status(401).json({ error: 'Ungültiges Token' });
 
   const userId = user.sub;
 
@@ -103,13 +103,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
-      console.error('Account-Loeschung fehlgeschlagen:', deleteError);
-      return res.status(500).json({ error: 'Account deletion failed' });
+      console.error('[DeleteAccount] Account-Loeschung fehlgeschlagen:', deleteError);
+      return res.status(500).json({ error: 'Account-Loeschung fehlgeschlagen' });
     }
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Delete account error:', error);
-    return res.status(500).json({ error: 'Account deletion failed' });
+    console.error('[DeleteAccount] Account-Loeschung fehlgeschlagen:', error);
+    return res.status(500).json({ error: 'Account-Loeschung fehlgeschlagen' });
   }
 }

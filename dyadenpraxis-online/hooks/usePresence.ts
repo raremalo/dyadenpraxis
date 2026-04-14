@@ -21,10 +21,11 @@ export function usePresence(userId: string | undefined): UsePresenceReturn {
 
   const setOnlineInDb = useCallback(async (online: boolean) => {
     if (!userId) return;
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({ is_online: online, is_available: online })
       .eq('id', userId);
+    if (error) console.error('[usePresence] Online-Status Update fehlgeschlagen:', error);
   }, [userId]);
 
   useEffect(() => {

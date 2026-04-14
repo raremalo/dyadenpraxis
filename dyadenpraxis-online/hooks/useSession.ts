@@ -144,7 +144,7 @@ export function useSession(): UseSessionReturn {
       if (fetchError) throw new Error(fetchError.message);
       setOpenSessions((data || []) as OpenSession[]);
     } catch (err) {
-      console.error('Open sessions laden fehlgeschlagen:', err);
+      console.error('[useSession] Open sessions laden fehlgeschlagen:', err);
     }
   }, [user]);
 
@@ -391,7 +391,7 @@ export function useSession(): UseSessionReturn {
 
       setOpenTriads(triads);
     } catch (err) {
-      console.error('Offene Triaden laden fehlgeschlagen:', err);
+      console.error('[useSession] Offene Triaden laden fehlgeschlagen:', err);
     }
   }, [user]);
 

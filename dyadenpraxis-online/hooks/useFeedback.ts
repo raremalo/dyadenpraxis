@@ -108,7 +108,7 @@ export function useFeedback(): UseFeedbackReturn {
       if (fetchError) throw new Error(fetchError.message);
       return data || [];
     } catch (err) {
-      console.error('Feedback laden fehlgeschlagen:', err);
+      console.error('[useFeedback] Feedback laden fehlgeschlagen:', err);
       return [];
     }
   }, []);
@@ -131,7 +131,7 @@ export function useFeedback(): UseFeedbackReturn {
       }
       return data;
     } catch (err) {
-      console.error('Mein Feedback laden fehlgeschlagen:', err);
+      console.error('[useFeedback] Mein Feedback laden fehlgeschlagen:', err);
       return null;
     }
   }, [user]);
@@ -167,7 +167,7 @@ export function useFeedback(): UseFeedbackReturn {
         would_practice_again_percent: Math.round((practiceAgainCount / total) * 100),
       };
     } catch (err) {
-      console.error('Rating-Zusammenfassung laden fehlgeschlagen:', err);
+      console.error('[useFeedback] Rating-Zusammenfassung laden fehlgeschlagen:', err);
       return null;
     }
   }, []);
@@ -186,7 +186,7 @@ export function useFeedback(): UseFeedbackReturn {
       if (fetchError) throw new Error(fetchError.message);
       return data || [];
     } catch (err) {
-      console.error('Erhaltenes Feedback laden fehlgeschlagen:', err);
+      console.error('[useFeedback] Erhaltenes Feedback laden fehlgeschlagen:', err);
       return [];
     }
   }, [user]);
