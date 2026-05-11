@@ -20,6 +20,7 @@ const UserProfile = React.lazy(() => import('./components/UserProfile'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
 const PracticeGroups = React.lazy(() => import('./components/PracticeGroups'));
 const PartnerFinder = React.lazy(() => import('./components/PartnerFinder'));
+const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
 
 // Suspense-Fallback
 const RouteFallback: React.FC = () => (
@@ -151,8 +152,11 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Auth-Guard: Nicht eingeloggt -> Login-Screen
-  if (!user) {
+  // Oeffentliche Routen die ohne Auth erreichbar sind
+  const PUBLIC_PATHS = ['/reset-password'];
+
+  // Auth-Guard: Nicht eingeloggt -> Login-Screen (ausser PUBLIC_PATHS)
+  if (!user && !PUBLIC_PATHS.includes(location.pathname)) {
     return <AuthView />;
   }
 
@@ -161,7 +165,7 @@ const AppContent: React.FC = () => {
   };
 
   // Determine if nav should be hidden
-  const hideNav = ['/session', '/connect', '/instructions'].some(p => location.pathname.startsWith(p));
+  const hideNav = ['/session', '/connect', '/instructions', '/reset-password'].some(p => location.pathname.startsWith(p));
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[var(--c-bg-app)] text-[var(--c-text-main)] font-sans transition-colors duration-500">
@@ -221,13 +225,24 @@ const AppContent: React.FC = () => {
             <Route path="/calendar" element={<Suspense fallback={<RouteFallback />}><Calendar /></Suspense>} />
             <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><PracticeGroups /></Suspense>} />
             <Route path="/partner-finder" element={<Suspense fallback={<RouteFallback />}><PartnerFinder onQuickMatch={() => navigate('/connect')} onSelectPartner={(partner) => navigate('/connect', { state: { selectedPartner: partner } })} /></Suspense>} />
+            <Route path="/reset-password" element={
+              <ErrorBoundary
+                fallbackTitle="Fehler"
+                fallbackMessage="Passwort-Zurücksetzung fehlgeschlagen. Bitte versuche es erneut."
+                onReset={() => navigate('/')}
+              >
+                <Suspense fallback={<RouteFallback />}>
+                  <ResetPassword />
+                </Suspense>
+              </ErrorBoundary>
+            } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ErrorBoundary>
       </div>
 
       {/* Navigation */}
-      {!hideNav && <AppNavigation />}
+      {user && !hideNav && <AppNavigation />}
     </div>
   );
 };

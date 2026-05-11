@@ -33,8 +33,11 @@ interface AuthContextType {
   initialized: boolean;
   loading: boolean;
   onlineUserIds: Set<string>;
+  isPasswordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<DbUserProfile>) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
@@ -48,6 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<DbUserProfile | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   // Supabase Presence: Live-Online-Status tracking
   const { onlineUserIds } = usePresence(user?.id);
@@ -126,6 +130,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return;
         }
 
+        // Handle PASSWORD_RECOVERY — user clicked reset link in email
+        if (event === 'PASSWORD_RECOVERY' && newSession?.user) {
+          setIsPasswordRecovery(true);
+          setSession(newSession);
+          setUser(newSession.user);
+          // No fetchProfile — recovery session only for password reset
+          return;
+        }
+
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
@@ -134,6 +147,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (p) setProfile(p);
         } else if (event === 'SIGNED_OUT' || !newSession) {
           setProfile(null);
+          setIsPasswordRecovery(false);
         }
       }
     );
@@ -167,6 +181,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) return { error: 'E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.' };
+      return { error: null };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) return { error: 'Passwort konnte nicht aktualisiert werden. Bitte versuche es erneut.' };
+      return { error: null };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     // is_online wird automatisch via usePresence Cleanup zurueckgesetzt
     await supabase.auth.signOut();
@@ -187,7 +225,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <AuthContext.Provider value={{
       user, session, profile, initialized, loading, onlineUserIds,
-      signIn, signUp, signOut, updateProfile, refreshProfile,
+      isPasswordRecovery,
+      signIn, signUp, resetPassword, updatePassword, signOut,
+      updateProfile, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
