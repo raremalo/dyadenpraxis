@@ -18,6 +18,10 @@ export interface DbUserProfile {
   sessions_completed: number;
   compliance_rate: number;
   em_experience_months: number;
+  // Session rate limiting (Migration 012)
+  role?: 'user' | 'admin';
+  daily_session_limit?: number | null;
+  monthly_session_limit?: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, Clock, UserPlus, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useCheckSessionLimit } from '../hooks/useCheckSessionLimit';
 
 const PracticeGroups: React.FC = () => {
   const { t } = useSettings();
   const { user } = useAuth();
+  const { allowed, limitInfo } = useCheckSessionLimit();
+  const [limitOverlayVisible, setLimitOverlayVisible] = useState(false);
   const {
     openTriads,
     joinTriad,
@@ -20,6 +23,10 @@ const PracticeGroups: React.FC = () => {
   }, [refreshTriads]);
 
   const handleJoinTriad = async (sessionId: string) => {
+    if (!allowed) {
+      setLimitOverlayVisible(true);
+      return;
+    }
     await joinTriad(sessionId);
   };
 

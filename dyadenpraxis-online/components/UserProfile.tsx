@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Clock, CheckCircle, LogOut, Globe, Palette, Moon, Sun, Coffee, Leaf, Camera, Loader2, Trash2, AlertTriangle, Bell } from 'lucide-react';
+import { Clock, CheckCircle, LogOut, Globe, Palette, Moon, Sun, Coffee, Leaf, Camera, Loader2, Trash2, AlertTriangle, Bell, Zap, BarChart3 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useAvatarUpload } from '../hooks/useAvatarUpload';
 import { useAccountDeletion } from '../hooks/useAccountDeletion';
+import { useCheckSessionLimit } from '../hooks/useCheckSessionLimit';
 import { NotificationPermission } from './NotificationPermission';
 
 const UserProfile: React.FC = () => {
@@ -17,6 +18,7 @@ const UserProfile: React.FC = () => {
   });
 
   const { isDeleting, error: deleteError, deleteAccount } = useAccountDeletion();
+  const { limitInfo } = useCheckSessionLimit();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
 
@@ -99,6 +101,20 @@ const UserProfile: React.FC = () => {
           <CheckCircle className="w-5 h-5 text-blue-400" />
           <span className="text-2xl font-serif">{profile?.sessions_completed ?? 0}</span>
           <span className="text-xs text-[var(--c-text-muted)] uppercase tracking-widest">{t.profile.sessions}</span>
+        </div>
+        <div className="bg-[var(--c-bg-card)] p-5 rounded-2xl border border-[var(--c-border)] shadow-sm flex flex-col items-center gap-2">
+          <Zap className="w-5 h-5 text-amber-400" />
+          <span className="text-2xl font-serif">
+            {limitInfo ? `${limitInfo.daily_count}/${limitInfo.daily_limit === -1 ? '∞' : limitInfo.daily_limit}` : '–'}
+          </span>
+          <span className="text-xs text-[var(--c-text-muted)] uppercase tracking-widest">{t.profile.dailyUsage || 'Heute'}</span>
+        </div>
+        <div className="bg-[var(--c-bg-card)] p-5 rounded-2xl border border-[var(--c-border)] shadow-sm flex flex-col items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-emerald-400" />
+          <span className="text-2xl font-serif">
+            {limitInfo ? `${limitInfo.monthly_count}/${limitInfo.monthly_limit === -1 ? '∞' : limitInfo.monthly_limit}` : '–'}
+          </span>
+          <span className="text-xs text-[var(--c-text-muted)] uppercase tracking-widest">{t.profile.monthlyUsage || 'Dieser Monat'}</span>
         </div>
       </div>
 

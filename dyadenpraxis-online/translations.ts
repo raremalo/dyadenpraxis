@@ -32,6 +32,8 @@ export const translations = {
       themeDark: 'Dunkel',
       themeWarm: 'Warm',
       themeNature: 'Natur',
+      dailyUsage: 'Heute',
+      monthlyUsage: 'Dieser Monat',
     },
     partner: {
       title: 'Partner finden',
@@ -296,6 +298,14 @@ export const translations = {
       thirdParticipant: '3. Teilnehmer',
       joinedAs: 'Beigetreten als 3. Teilnehmer',
     },
+    sessionLimit: {
+      title: 'Session-Limit erreicht',
+      dailyMessage: 'Du hast dein Tageslimit erreicht.',
+      monthlyMessage: 'Du hast dein Monatslimit erreicht.',
+      dailySubtitle: 'Heute',
+      monthlySubtitle: 'Dieser Monat',
+      back: 'Zurück',
+    },
     deleteAccount: {
       title: 'Account loeschen',
       description: 'Dein Account und alle zugehoerigen Daten werden unwiderruflich geloescht (DSGVO Art. 17).',
@@ -355,6 +365,8 @@ export const translations = {
       themeDark: 'Dark',
       themeWarm: 'Warm',
       themeNature: 'Nature',
+      dailyUsage: 'Today',
+      monthlyUsage: 'This month',
     },
     partner: {
       title: 'Find Partner',
@@ -618,6 +630,14 @@ export const translations = {
       active: 'Active',
       thirdParticipant: '3rd Participant',
       joinedAs: 'Joined as 3rd participant',
+    },
+    sessionLimit: {
+      title: 'Session limit reached',
+      dailyMessage: 'You have reached your daily limit.',
+      monthlyMessage: 'You have reached your monthly limit.',
+      dailySubtitle: 'Today',
+      monthlySubtitle: 'This month',
+      back: 'Back',
     },
     deleteAccount: {
       title: 'Delete account',
