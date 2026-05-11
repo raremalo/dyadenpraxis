@@ -154,26 +154,35 @@ export function useSession(): UseSessionReturn {
     setError(null);
 
     try {
-      const { data, error: insertError } = await supabase
-        .from('sessions')
-        .insert({
-          requester_id: user.id,
-          partner_id: params.partnerId,
-          level: params.level,
-          duration: params.duration,
-          is_open: params.isOpen || false,
-        })
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
-          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
-        `)
-        .single();
+      const { data, error: rpcError } = await supabase.rpc('create_session_limited', {
+        p_requester_id: user.id,
+        p_partner_id: params.partnerId,
+        p_level: params.level,
+        p_duration: params.duration,
+        p_is_open: params.isOpen || false,
+      });
 
-      if (insertError) throw new Error(insertError.message);
-      
-      await loadSessions();
-      return data as Session;
+      if (rpcError) throw new Error(rpcError.message);
+
+      const result = data as {
+        success: boolean;
+        session?: Session;
+        error?: string;
+        limit_type?: string;
+      };
+
+      if (!result.success) {
+        const msg = result.error === 'session_limit_reached'
+          ? `Session-Limit erreicht (${result.limit_type === 'daily' ? 'Tageslimit' : 'Monatslimit'})`
+          : 'Session erstellen fehlgeschlagen';
+        setError(msg);
+        return null;
+      }
+
+      // Single-Writer Pattern: return session directly from RPC, prepend to local state
+      const session = result.session as Session;
+      setSessions(prev => [session, ...prev]);
+      return session;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Session erstellen fehlgeschlagen';
       setError(msg);
@@ -181,7 +190,7 @@ export function useSession(): UseSessionReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [user, loadSessions]);
+  }, [user]);
 
   const acceptSession = useCallback(async (sessionId: string): Promise<boolean> => {
     if (!user) return false;
@@ -325,19 +334,30 @@ export function useSession(): UseSessionReturn {
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
-        .from('sessions')
-        .update({
-          partner_id: user.id,
-          is_open: false,
-          status: 'accepted',
-        })
-        .eq('id', sessionId)
-        .eq('is_open', true)
-        .eq('status', 'pending');
+      const { data, error: rpcError } = await supabase.rpc('join_open_session_limited', {
+        p_session_id: sessionId,
+        p_user_id: user.id,
+      });
 
-      if (updateError) throw new Error(updateError.message);
-      
+      if (rpcError) throw new Error(rpcError.message);
+
+      const result = data as {
+        success: boolean;
+        slot?: string;
+        is_full?: boolean;
+        error?: string;
+        limit_type?: string;
+      };
+
+      if (!result.success) {
+        if (result.error === 'session_limit_reached') {
+          setError(`Session-Limit erreicht (${result.limit_type === 'daily' ? 'Tageslimit' : 'Monatslimit'})`);
+        } else {
+          setError(result.error || 'Session beitreten fehlgeschlagen');
+        }
+        return false;
+      }
+
       await loadSessions();
       await loadOpenSessions();
       return true;
@@ -401,16 +421,29 @@ export function useSession(): UseSessionReturn {
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
-        .from('sessions')
-        .update({
-          third_participant_id: user.id,
-        })
-        .eq('id', sessionId)
-        .eq('is_open', true)
-        .is('third_participant_id', null);
+      const { data, error: rpcError } = await supabase.rpc('join_open_session_limited', {
+        p_session_id: sessionId,
+        p_user_id: user.id,
+      });
 
-      if (updateError) throw new Error(updateError.message);
+      if (rpcError) throw new Error(rpcError.message);
+
+      const result = data as {
+        success: boolean;
+        slot?: string;
+        is_full?: boolean;
+        error?: string;
+        limit_type?: string;
+      };
+
+      if (!result.success) {
+        if (result.error === 'session_limit_reached') {
+          setError(`Session-Limit erreicht (${result.limit_type === 'daily' ? 'Tageslimit' : 'Monatslimit'})`);
+        } else {
+          setError(result.error || 'Triade beitreten fehlgeschlagen');
+        }
+        return false;
+      }
 
       await loadSessions();
       await loadOpenTriads();

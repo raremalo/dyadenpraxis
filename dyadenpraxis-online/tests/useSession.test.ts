@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useSession } from '../hooks/useSession';
+import { useSession, Session } from '../hooks/useSession';
 
 const { mockFrom, mockRpc } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
@@ -16,8 +16,10 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
+const mockUser = Object.freeze({ id: 'user-123', email: 'test@example.com' });
+
 vi.mock('../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'user-123', email: 'test@example.com' } }),
+  useAuth: () => ({ user: mockUser }),
 }));
 
 /**
@@ -136,4 +138,115 @@ describe('useSession', () => {
       expect(result.current[method as keyof typeof result.current]).toBeInstanceOf(Function);
     }
   });
+
+  it('createSession ruft create_session_limited RPC auf', async () => {
+    const sessionData = {
+      id: 's-new', requester_id: 'user-123', partner_id: 'p1',
+      status: 'pending', level: 1, duration: 40,
+      created_at: '2026-05-11T00:00:00Z',
+      is_open: false,
+      third_participant_id: null,
+      deleted_by_requester: false, deleted_by_partner: false,
+      requester: { id: 'user-123', name: 'Test', avatar_url: null, trust_level: 'new', is_online: true },
+      partner: { id: 'p1', name: 'Partner', avatar_url: null, trust_level: 'new', is_online: true },
+    };
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'create_session_limited') {
+        return Promise.resolve({ data: { success: true, session: sessionData }, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let createdSession: Session | null = null;
+    await act(async () => {
+      createdSession = await result.current.createSession({
+        partnerId: 'p1', level: 1, duration: 40,
+      });
+    });
+
+    expect(createdSession).not.toBeNull();
+    expect(createdSession?.id).toBe('s-new');
+    expect(mockRpc).toHaveBeenCalledWith('create_session_limited', {
+      p_requester_id: 'user-123',
+      p_partner_id: 'p1',
+      p_level: 1,
+      p_duration: 40,
+      p_is_open: false,
+    });
+  });
+
+  it('createSession behandelt session_limit_reached', async () => {
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'create_session_limited') {
+        return Promise.resolve({ data: { success: false, error: 'session_limit_reached', limit_type: 'daily' }, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      const session = await result.current.createSession({
+        partnerId: 'p1', level: 1, duration: 40,
+      });
+      expect(session).toBeNull();
+    });
+
+    expect(result.current.error).toContain('Session-Limit');
+  });
+
+  it('joinOpenSession ruft join_open_session_limited RPC auf', async () => {
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'join_open_session_limited') {
+        return Promise.resolve({ data: { success: true, slot: 'partner', is_full: true }, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.joinOpenSession('session-1');
+    });
+
+    expect(success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('join_open_session_limited', {
+      p_session_id: 'session-1',
+      p_user_id: 'user-123',
+    });
+  });
+
+  it('joinAsThirdParticipant ruft join_open_session_limited RPC auf', async () => {
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'join_open_session_limited') {
+        return Promise.resolve({ data: { success: true, slot: 'third', is_full: true }, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const { result } = renderHook(() => useSession());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.joinAsThirdParticipant('session-1');
+    });
+
+    expect(success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('join_open_session_limited', {
+      p_session_id: 'session-1',
+      p_user_id: 'user-123',
+    });
+  });
+
 });

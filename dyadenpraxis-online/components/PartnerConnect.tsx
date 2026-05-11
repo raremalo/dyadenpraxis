@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useCheckSessionLimit } from '../hooks/useCheckSessionLimit';
 import { usePartnerSearch, Partner } from '../hooks/usePartnerSearch';
 
 interface PartnerConnectProps {
@@ -14,11 +15,12 @@ interface PartnerConnectProps {
   onCancel: () => void;
 }
 
-type Phase = 'searching' | 'selecting' | 'configuring' | 'requesting' | 'waiting';
+type Phase = 'searching' | 'selecting' | 'configuring' | 'limit_reached' | 'requesting' | 'waiting';
 
 const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }) => {
   const { t } = useSettings();
   const { user, onlineUserIds } = useAuth();
+  const { allowed, limitInfo } = useCheckSessionLimit();
   const { recommended, loadRecommended, isLoading: searchLoading, error: searchError } = usePartnerSearch();
   const {
     requestSession,
@@ -71,7 +73,11 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
 
   const handleSelectPartner = (partner: Partner) => {
     setSelectedPartner(partner);
-    setPhase('configuring');
+    if (!allowed) {
+      setPhase('limit_reached');
+    } else {
+      setPhase('configuring');
+    }
   };
 
   const handleRequestSession = async () => {
@@ -96,11 +102,13 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
   };
 
   const handleBack = () => {
-    if (phase === 'configuring') {
+    if (phase === 'limit_reached') {
+      setSelectedPartner(null);
+      setPhase('selecting');
+    } else if (phase === 'configuring') {
       setSelectedPartner(null);
       setPhase('selecting');
     } else if (phase === 'waiting') {
-      // Cancel would need to cancel the session
       onCancel();
     }
   };
@@ -318,6 +326,40 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
               )}
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Phase: Limit Reached (Soft-Wall)
+  if (phase === 'limit_reached') {
+    return (
+      <div className="fixed inset-0 z-40 bg-[var(--c-bg-app)]/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-[var(--c-text-main)]">
+        <div className="max-w-md w-full text-center space-y-8 fade-in">
+          <div className="bg-[var(--c-bg-card)] rounded-2xl p-8 border border-[var(--c-border)] shadow-sm space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-amber-500" />
+            </div>
+            <h3 className="text-xl font-serif">{t.sessionLimit?.title || 'Session-Limit erreicht'}</h3>
+            <p className="text-[var(--c-text-muted)] font-light">
+              {limitInfo?.limit_type === 'daily'
+                ? (t.sessionLimit?.dailyMessage || 'Du hast dein Tageslimit erreicht.')
+                : (t.sessionLimit?.monthlyMessage || 'Du hast dein Monatslimit erreicht.')
+              }
+            </p>
+            {limitInfo && (
+              <div className="flex justify-center gap-6 text-sm text-[var(--c-text-muted)]">
+                <span>{t.sessionLimit?.dailySubtitle || 'Heute'}: {limitInfo.daily_count}/{limitInfo.daily_limit === -1 ? '∞' : limitInfo.daily_limit}</span>
+                <span>{t.sessionLimit?.monthlySubtitle || 'Dieser Monat'}: {limitInfo.monthly_count}/{limitInfo.monthly_limit === -1 ? '∞' : limitInfo.monthly_limit}</span>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleBack}
+            className="px-8 py-3 bg-[var(--c-bg-card)] text-[var(--c-text-main)] rounded-2xl border border-[var(--c-border)] font-medium hover:bg-[var(--c-bg-card-hover)] transition-colors"
+          >
+            {t.sessionLimit?.back || 'Zurück'}
+          </button>
         </div>
       </div>
     );
