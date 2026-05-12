@@ -36,8 +36,8 @@ interface AuthContextType {
   isPasswordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
-  resetPassword: (email: string) => Promise<{ error: string | null }>;
-  updatePassword: (password: string) => Promise<{ error: string | null }>;
+  resetPassword: (email: string) => Promise<{ error: 'reset_email_failed' | null }>;
+  updatePassword: (password: string) => Promise<{ error: 'update_password_failed' | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<DbUserProfile>) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
@@ -187,7 +187,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (error) return { error: 'E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.' };
+      if (error) return { error: 'reset_email_failed' as const };
       return { error: null };
     } finally {
       setLoading(false);
@@ -198,7 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) return { error: 'Passwort konnte nicht aktualisiert werden. Bitte versuche es erneut.' };
+      if (error) return { error: 'update_password_failed' as const };
       return { error: null };
     } finally {
       setLoading(false);

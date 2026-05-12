@@ -32,7 +32,7 @@ const ResetPassword: React.FC = () => {
     try {
       const result = await updatePassword(newPassword);
       if (result.error) {
-        setError(result.error);
+        setError(t.auth.resetErrorGeneral);
         return;
       }
       setSuccess(true);
