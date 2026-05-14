@@ -11,7 +11,7 @@ import { getRandomQuestion } from './data/dyadQuestions';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SessionProvider } from './contexts/SessionContext';
-import { Wind, Users, BookOpen, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
+import { Users, BookOpen, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
 
 // Lazy-loaded Route-Komponenten
 const PartnerConnect = React.lazy(() => import('./components/PartnerConnect'));
@@ -64,11 +64,6 @@ const HomeView: React.FC = () => {
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6 pb-24 text-center fade-in">
       <header className="mb-10 space-y-2 pt-8">
-        <div className="flex justify-center mb-4">
-          <div className="p-3 bg-[var(--c-bg-card)] rounded-2xl shadow-sm shadow-black/5">
-            <Wind className="w-8 h-8 text-[var(--c-text-muted)]" />
-          </div>
-        </div>
         <h1 className="text-4xl md:text-6xl font-serif text-[var(--c-text-main)] tracking-tight">Dyadenpraxis</h1>
         <p className="text-[var(--c-text-muted)] font-light tracking-wide uppercase text-sm">{t.home.subtitle}</p>
       </header>
