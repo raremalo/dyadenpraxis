@@ -44,3 +44,11 @@ supabase/.temp/
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Agent / meta directories (not project source)
+.claude/
+.omc/
+.pi/
+.autoresearch/
+.rpiv/
+thoughts/
