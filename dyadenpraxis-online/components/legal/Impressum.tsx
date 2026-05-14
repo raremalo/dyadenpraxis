@@ -31,7 +31,6 @@ const Impressum: React.FC = () => {
           {/* Kontakt */}
           <section>
             <h2 className="text-xl font-medium mb-3 text-[var(--c-text-main)]">{t.impressum.contactHeading}</h2>
-            <p className="text-[var(--c-text-muted)]">{t.impressum.phone}</p>
             <p className="text-[var(--c-text-muted)]">{t.impressum.email}</p>
           </section>
 
