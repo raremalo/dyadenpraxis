@@ -13,8 +13,10 @@ import {
   useInputSettings,
   useDevices,
   useAppMessage,
+  useNetwork,
 } from '@daily-co/daily-react';
 import { useSettings } from '../contexts/SettingsContext';
+import { Wifi, WifiOff } from 'lucide-react';
 import { DyadRole } from '../types';
 
 interface VideoRoomProps {
@@ -153,6 +155,9 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
   const [noiseCancellation, setNoiseCancellation] = useState(false);
   const [bgEffect, setBgEffect] = useState<'none' | 'blur'>('none');
   const [callError, setCallError] = useState<string | null>(null);
+
+  // Netzwerkqualitaet
+  const { networkState } = useNetwork();
 
   // Daily.co device & input settings hooks
   const { updateInputSettings } = useInputSettings();
@@ -390,6 +395,20 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
         ''
       }`}
     >
+        {/* Netzwerk-Indikator — dezent oben links, nur bei Problemen */}
+        {(networkState === 'warning' || networkState === 'bad') && (
+          <div
+            className={`absolute top-4 left-4 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-sm transition-all duration-500 ${
+              networkState === 'bad'
+                ? 'bg-rose-500/80 text-white'
+                : 'bg-amber-500/80 text-white'
+            }`}
+          >
+            {networkState === 'bad' ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+            <span>{networkState === 'bad' ? 'Schlechte Verbindung' : 'Instabile Verbindung'}</span>
+          </div>
+        )}
+
       {/* Partner Video — full area */}
       <div className="flex-1 min-h-0 relative">
         {remoteParticipantIds.length > 0 ? (
