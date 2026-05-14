@@ -12,6 +12,7 @@ import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { Users, BookOpen, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
+import Footer from './components/Footer';
 
 // Lazy-loaded Route-Komponenten
 const PartnerConnect = React.lazy(() => import('./components/PartnerConnect'));
@@ -21,6 +22,9 @@ const Calendar = React.lazy(() => import('./components/Calendar'));
 const PracticeGroups = React.lazy(() => import('./components/PracticeGroups'));
 const PartnerFinder = React.lazy(() => import('./components/PartnerFinder'));
 const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
+const Impressum = React.lazy(() => import('./components/legal/Impressum'));
+const Datenschutz = React.lazy(() => import('./components/legal/Datenschutz'));
+const Terms = React.lazy(() => import('./components/legal/Terms'));
 
 // Suspense-Fallback
 const RouteFallback: React.FC = () => (
@@ -148,19 +152,20 @@ const AppContent: React.FC = () => {
   }
 
   // Oeffentliche Routen die ohne Auth erreichbar sind
-  const PUBLIC_PATHS = ['/reset-password'];
+  const PUBLIC_PATHS = ['/reset-password', '/impressum', '/datenschutz', '/agb'];
 
   // Auth-Guard: Nicht eingeloggt -> Login-Screen (ausser PUBLIC_PATHS)
-  if (!user && !PUBLIC_PATHS.includes(location.pathname)) {
-    return <AuthView />;
-  }
+  // Wird als Ternary im return verwendet, damit Footer auf allen Seiten sichtbar ist
+  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
+  const showAuth = !user && !isPublicPath;
 
   const handleConnected = () => {
     navigate('/session');
   };
 
   // Determine if nav should be hidden
-  const hideNav = ['/session', '/connect', '/instructions', '/reset-password'].some(p => location.pathname.startsWith(p));
+  const hideNav = ['/session', '/connect', '/instructions', '/reset-password',
+    '/impressum', '/datenschutz', '/agb'].some(p => location.pathname.startsWith(p));
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[var(--c-bg-app)] text-[var(--c-text-main)] font-sans transition-colors duration-500">
@@ -173,70 +178,110 @@ const AppContent: React.FC = () => {
       <div className="fixed bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-orange-50/40 dark:bg-orange-900/20 blur-[120px] pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
       <div className="fixed top-[40%] left-[50%] -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-slate-100/30 dark:bg-slate-800/20 blur-[80px] pointer-events-none" />
 
-      {/* Routes */}
-      <div className="relative z-10">
-        <ErrorBoundary
-          fallbackTitle="Verbindungsfehler"
-          fallbackMessage="Bei der Verbindung ist ein Fehler aufgetreten. Bitte versuche es erneut."
-          onReset={() => navigate('/')}
-        >
-          <Routes>
-            <Route path="/" element={<HomeView />} />
-            <Route path="/instructions" element={<DyadInstructions onBack={() => navigate('/')} />} />
-            <Route path="/connect" element={
-              <ErrorBoundary
-                fallbackTitle="Verbindungsfehler"
-                fallbackMessage="Das Matching konnte nicht gestartet werden."
-                onReset={() => navigate('/')}
-              >
-                <Suspense fallback={<RouteFallback />}>
-                  <PartnerConnect onConnected={handleConnected} onCancel={() => navigate('/')} />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="/session" element={
-              <ErrorBoundary
-                fallbackTitle="Session-Fehler"
-                fallbackMessage="Die Session wurde unterbrochen. Bitte starte eine neue Session."
-                onReset={() => navigate('/')}
-              >
-                <Suspense fallback={<RouteFallback />}>
-                  <ActiveSession onClose={() => navigate('/')} />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="/session/:sessionId" element={
-              <ErrorBoundary
-                fallbackTitle="Session-Fehler"
-                fallbackMessage="Die Session wurde unterbrochen. Bitte starte eine neue Session."
-                onReset={() => navigate('/')}
-              >
-                <Suspense fallback={<RouteFallback />}>
-                  <ActiveSession onClose={() => navigate('/')} />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="/profile" element={<Suspense fallback={<RouteFallback />}><UserProfile /></Suspense>} />
-            <Route path="/calendar" element={<Suspense fallback={<RouteFallback />}><Calendar /></Suspense>} />
-            <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><PracticeGroups /></Suspense>} />
-            <Route path="/partner-finder" element={<Suspense fallback={<RouteFallback />}><PartnerFinder onQuickMatch={() => navigate('/connect')} onSelectPartner={(partner) => navigate('/connect', { state: { selectedPartner: partner } })} /></Suspense>} />
-            <Route path="/reset-password" element={
-              <ErrorBoundary
-                fallbackTitle="Fehler"
-                fallbackMessage="Passwort-Zurücksetzung fehlgeschlagen. Bitte versuche es erneut."
-                onReset={() => navigate('/')}
-              >
-                <Suspense fallback={<RouteFallback />}>
-                  <ResetPassword />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ErrorBoundary>
-      </div>
+      {/* Auth gate ODER Routes */}
+      {showAuth ? (
+        <AuthView />
+      ) : (
+        <div className="relative z-10">
+          <ErrorBoundary
+            fallbackTitle="Verbindungsfehler"
+            fallbackMessage="Bei der Verbindung ist ein Fehler aufgetreten. Bitte versuche es erneut."
+            onReset={() => navigate('/')}
+          >
+            <Routes>
+              <Route path="/" element={<HomeView />} />
+              <Route path="/instructions" element={<DyadInstructions onBack={() => navigate('/')} />} />
+              <Route path="/connect" element={
+                <ErrorBoundary
+                  fallbackTitle="Verbindungsfehler"
+                  fallbackMessage="Das Matching konnte nicht gestartet werden."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <PartnerConnect onConnected={handleConnected} onCancel={() => navigate('/')} />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="/session" element={
+                <ErrorBoundary
+                  fallbackTitle="Session-Fehler"
+                  fallbackMessage="Die Session wurde unterbrochen. Bitte starte eine neue Session."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ActiveSession onClose={() => navigate('/')} />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="/session/:sessionId" element={
+                <ErrorBoundary
+                  fallbackTitle="Session-Fehler"
+                  fallbackMessage="Die Session wurde unterbrochen. Bitte starte eine neue Session."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ActiveSession onClose={() => navigate('/')} />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="/profile" element={<Suspense fallback={<RouteFallback />}><UserProfile /></Suspense>} />
+              <Route path="/calendar" element={<Suspense fallback={<RouteFallback />}><Calendar /></Suspense>} />
+              <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><PracticeGroups /></Suspense>} />
+              <Route path="/partner-finder" element={<Suspense fallback={<RouteFallback />}><PartnerFinder onQuickMatch={() => navigate('/connect')} onSelectPartner={(partner) => navigate('/connect', { state: { selectedPartner: partner } })} /></Suspense>} />
+              <Route path="/reset-password" element={
+                <ErrorBoundary
+                  fallbackTitle="Fehler"
+                  fallbackMessage="Passwort-Zurücksetzung fehlgeschlagen. Bitte versuche es erneut."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ResetPassword />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="/impressum" element={
+                <ErrorBoundary
+                  fallbackTitle="Fehler"
+                  fallbackMessage="Die Seite konnte nicht geladen werden. Bitte versuche es erneut."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <Impressum />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="/datenschutz" element={
+                <ErrorBoundary
+                  fallbackTitle="Fehler"
+                  fallbackMessage="Die Seite konnte nicht geladen werden. Bitte versuche es erneut."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <Datenschutz />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="/agb" element={
+                <ErrorBoundary
+                  fallbackTitle="Fehler"
+                  fallbackMessage="Die Seite konnte nicht geladen werden. Bitte versuche es erneut."
+                  onReset={() => navigate('/')}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <Terms />
+                  </Suspense>
+                </ErrorBoundary>
+              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
+        </div>
+      )}
 
-      {/* Navigation */}
+      {/* Footer — auf allen Seiten sichtbar */}
+      <Footer />
+
+      {/* Navigation — nur für eingeloggte Nutzer */}
       {user && !hideNav && <AppNavigation />}
     </div>
   );
