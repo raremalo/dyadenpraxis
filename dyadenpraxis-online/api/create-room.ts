@@ -113,7 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const requesterToken = await createMeetingToken(roomName, 'requester', expiresAt);
     const partnerToken = await createMeetingToken(roomName, 'partner', expiresAt);
 
-    // Optional: 3. Teilnehmer Token fuer Level 3
+    // Optional: 3. Teilnehmer Token
     let thirdToken = null;
     if (includeThird) {
       thirdToken = await createMeetingToken(roomName, 'third', expiresAt);

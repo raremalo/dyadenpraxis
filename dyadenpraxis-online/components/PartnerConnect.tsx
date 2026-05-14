@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Loader2, User, CheckCircle2, Search, X, Clock,
-  ChevronRight, Users, AlertCircle, RefreshCw, Zap
+  ChevronRight, Users, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
@@ -226,11 +226,6 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
                   <div className="flex-1 text-left">
                     <h4 className="font-medium text-[var(--c-text-main)]">{partner.name}</h4>
                     <div className="flex items-center gap-2 text-xs text-[var(--c-text-muted)] mt-1">
-                      <span className="flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        Level {partner.preferred_levels?.join(', ') || '1-3'}
-                      </span>
-                      <span>•</span>
                       <span>{partner.sessions_completed || 0} Sessions</span>
                     </div>
                   </div>

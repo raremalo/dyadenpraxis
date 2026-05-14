@@ -38,7 +38,6 @@ export default function ScheduleModal({
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [duration, setDuration] = useState(15);
-  const [level, setLevel] = useState(1);
   const [message, setMessage] = useState('');
 
   // Load overlapping availability slots
@@ -81,7 +80,6 @@ export default function ScheduleModal({
         partner_id: partnerId,
         scheduled_for: scheduledFor,
         duration,
-        level,
         message: message.trim() || undefined,
       });
 
@@ -205,38 +203,21 @@ export default function ScheduleModal({
             />
           </div>
 
-          {/* Duration & Level */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-1 block">
-                {t.calendar?.duration || 'Dauer'}
-              </label>
-              <select
-                value={duration}
-                onChange={(e) => setDuration(parseInt(e.target.value))}
-                className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700"
-              >
-                <option value={10}>10 min</option>
-                <option value={15}>15 min</option>
-                <option value={20}>20 min</option>
-                <option value={30}>30 min</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-1 block">
-                {t.calendar?.level || 'Level'}
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(parseInt(e.target.value))}
-                className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700"
-              >
-                <option value={1}>Level 1</option>
-                <option value={2}>Level 2</option>
-                <option value={3}>Level 3</option>
-                <option value={4}>Level 4</option>
-              </select>
-            </div>
+          {/* Duration */}
+          <div>
+            <label className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-1 block">
+              {t.calendar?.duration || 'Dauer'}
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(parseInt(e.target.value))}
+              className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700"
+            >
+              <option value={10}>10 min</option>
+              <option value={15}>15 min</option>
+              <option value={20}>20 min</option>
+              <option value={30}>30 min</option>
+            </select>
           </div>
 
           {/* Message */}
