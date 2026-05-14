@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../contexts/SettingsContext';
-import { Wind, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const ResetPassword: React.FC = () => {
   const { updatePassword, signOut, isPasswordRecovery } = useAuth();
@@ -49,9 +49,6 @@ const ResetPassword: React.FC = () => {
     return (
       <div className="min-h-screen bg-[var(--c-bg-app)] flex flex-col items-center justify-center px-6">
         <div className="text-center mb-10 fade-in">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--c-accent)]/10 mb-4">
-            <Wind className="w-8 h-8 text-[var(--c-accent)]" />
-          </div>
           <h1 className="text-3xl font-serif text-[var(--c-text-main)] mt-1">
             {t.auth.welcomeSubtitle}
           </h1>
@@ -82,9 +79,6 @@ const ResetPassword: React.FC = () => {
     return (
       <div className="min-h-screen bg-[var(--c-bg-app)] flex flex-col items-center justify-center px-6">
         <div className="text-center mb-10 fade-in">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--c-accent)]/10 mb-4">
-            <Wind className="w-8 h-8 text-[var(--c-accent)]" />
-          </div>
           <h1 className="text-3xl font-serif text-[var(--c-text-main)] mt-1">
             {t.auth.welcomeSubtitle}
           </h1>
@@ -114,9 +108,6 @@ const ResetPassword: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--c-bg-app)] flex flex-col items-center justify-center px-6">
       <div className="text-center mb-10 fade-in">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--c-accent)]/10 mb-4">
-          <Wind className="w-8 h-8 text-[var(--c-accent)]" />
-        </div>
         <p className="text-sm text-[var(--c-text-muted)] tracking-widest uppercase">
           {t.auth.welcomeTitle}
         </p>

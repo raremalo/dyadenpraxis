@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../contexts/SettingsContext';
-import { Wind, Mail, Lock, User, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const AuthView: React.FC = () => {
   const { signIn, signUp, resetPassword, loading } = useAuth();
@@ -50,9 +50,6 @@ const AuthView: React.FC = () => {
     <div className="min-h-screen bg-[var(--c-bg-app)] flex flex-col items-center justify-center px-6">
       {/* Logo & Welcome */}
       <div className="text-center mb-10 fade-in">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--c-accent)]/10 mb-4">
-          <Wind className="w-8 h-8 text-[var(--c-accent)]" />
-        </div>
         <p className="text-sm text-[var(--c-text-muted)] tracking-widest uppercase">
           {t.auth.welcomeTitle}
         </p>
