@@ -75,7 +75,7 @@ const DyadInstructions: React.FC<DyadInstructionsProps> = ({ onBack }) => {
             <ul className="list-disc pl-5 space-y-2 text-[var(--c-text-muted)]">
               <li><span className="font-medium text-[var(--c-text-main)]">Struktur</span> — Klare Zeitvorgaben, feste Abläufe und definierte Rollen schaffen einen sicheren Rahmen.</li>
               <li><span className="font-medium text-[var(--c-text-main)]">Präsenz</span> — Vollständige Aufmerksamkeit im gegenwärtigen Moment ohne Ablenkung oder Bewertung.</li>
-              <li><span className="font-medium text-[var(--c-text-main)]">Authentizität</span> — Ehrliches Mitteilen dessen, was gerade wirklich in einem vorgeht.</li>
+              <li><span className="font-medium text-[var(--c-text-main)]">Authentizität</span> — Offen und ehrlich teilen, was gerade wirklich in einem vorgeht.</li>
               <li><span className="font-medium text-[var(--c-text-main)]">Kontemplation</span> — Tiefes Erforschen der Leitfrage durch wiederholtes Eintauchen und Reflektieren.</li>
             </ul>
           </section>
