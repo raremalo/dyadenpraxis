@@ -1,4 +1,3 @@
-import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -13,18 +12,25 @@ export default defineConfig(({ mode }) => {
       define: {},
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': import.meta.dirname,
         }
       },
       build: {
-        rollupOptions: {
+        rolldownOptions: {
           output: {
-            manualChunks: {
-              'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-              'vendor-supabase': ['@supabase/supabase-js'],
-              'vendor-ui': ['lucide-react'],
-              'vendor-daily': ['@daily-co/daily-js'],
-              // @google/genai moved to server-side API proxy
+            manualChunks(id) {
+              if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('node_modules/@supabase')) {
+                return 'vendor-supabase';
+              }
+              if (id.includes('node_modules/lucide-react')) {
+                return 'vendor-ui';
+              }
+              if (id.includes('node_modules/@daily-co')) {
+                return 'vendor-daily';
+              }
             },
           },
         },
