@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Loader2, User, CheckCircle2, Search, X, Clock,
-  ChevronRight, Users, AlertCircle, RefreshCw
+  ChevronRight, Users, AlertCircle, RefreshCw, UsersRound
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
@@ -36,6 +36,7 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
   const [phase, setPhase] = useState<Phase>(preselected ? 'configuring' : 'searching');
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(preselected || null);
   const [sessionDuration, setSessionDuration] = useState(40);
+  const [isOpenForThird, setIsOpenForThird] = useState(false);
 
   // Filter online partners from recommendations
   const onlinePartners = useMemo(() => {
@@ -87,7 +88,8 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
     const success = await requestSession(
       selectedPartner.id,
       1,
-      sessionDuration
+      sessionDuration,
+      isOpenForThird
     );
     
     if (success) {
@@ -287,6 +289,40 @@ const PartnerConnect: React.FC<PartnerConnectProps> = ({ onConnected, onCancel }
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Open for Third Participant Toggle */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setIsOpenForThird(!isOpenForThird)}
+                className={`w-full p-4 rounded-xl border transition-all flex items-center gap-3 ${
+                  isOpenForThird
+                    ? 'border-[var(--c-accent)] bg-[var(--c-accent)]/10'
+                    : 'border-[var(--c-border)] bg-[var(--c-bg-app)]'
+                }`}
+              >
+                <UsersRound className={`w-5 h-5 flex-shrink-0 ${
+                  isOpenForThird ? 'text-[var(--c-accent)]' : 'text-[var(--c-text-muted)]'
+                }`} />
+                <div className="flex-1 text-left">
+                  <div className={`text-sm font-medium ${
+                    isOpenForThird ? 'text-[var(--c-accent)]' : 'text-[var(--c-text-main)]'
+                  }`}>
+                    {t.triad?.label || 'Triade'}
+                  </div>
+                  <div className="text-xs text-[var(--c-text-muted)] mt-0.5">
+                    {t.triad?.lookingForThird || 'Suchen 3. Teilnehmer'}
+                  </div>
+                </div>
+                <div className={`w-10 h-6 rounded-full relative transition-colors ${
+                  isOpenForThird ? 'bg-[var(--c-accent)]' : 'bg-[var(--c-border)]'
+                }`}>
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                    isOpenForThird ? 'translate-x-[18px]' : 'translate-x-0.5'
+                  }`} />
+                </div>
+              </button>
             </div>
           </div>
 
