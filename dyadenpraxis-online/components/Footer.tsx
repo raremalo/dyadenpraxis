@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
   const { t } = useSettings();
 
   return (
-    <footer className="w-full pb-28 pt-8">
+    <footer className="w-full pb-28 pt-6">
       <div className="flex flex-col items-center gap-3 text-xs text-[var(--c-text-muted)]">
         <nav className="flex items-center gap-4">
           <Link

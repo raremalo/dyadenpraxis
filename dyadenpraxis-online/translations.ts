@@ -8,6 +8,7 @@ export const translations = {
       partner: 'Partner',
       groups: 'Gruppen',
       profile: 'Profil',
+      donate: 'Spenden',
     },
     home: {
       subtitle: 'Online Begegnung',
@@ -435,6 +436,7 @@ export const translations = {
       partner: 'Partner',
       groups: 'Groups',
       profile: 'Profile',
+      donate: 'Donate',
     },
     home: {
       subtitle: 'Online Encounter',
