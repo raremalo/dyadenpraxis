@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, Users, User, Search } from 'lucide-react';
+import { Home, Calendar, Users, User, Search, Heart } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 const AppNavigation: React.FC = () => {
@@ -37,6 +37,17 @@ const AppNavigation: React.FC = () => {
             </button>
           );
         })}
+        {/* Spenden-Button */}
+        <a
+          href="https://liberapay.com/Ralf.Lorini/donate"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300 text-[var(--c-text-muted)] hover:text-rose-400"
+          title={t.nav?.donate || 'Spenden'}
+        >
+          <Heart className="w-6 h-6 mb-1 stroke-2" />
+          <span className="text-[10px] font-medium tracking-wide">{t.nav?.donate || 'Spenden'}</span>
+        </a>
       </nav>
     </div>
   );
