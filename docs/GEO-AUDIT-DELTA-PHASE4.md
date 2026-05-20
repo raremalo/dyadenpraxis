@@ -58,7 +58,7 @@ Vercel-Deploy beobachten: https://vercel.com/dashboard → Projekt `dyadenpraxis
 ```bash
 curl -A "Mozilla/5.0" https://www.dyadenpraxis.de/sitemap.xml | head -20
 curl -A "Mozilla/5.0" https://www.dyadenpraxis.de/llms.txt | head -10
-curl -A "Mozilla/5.0" https://www.dyadenpraxis.de/dyade-meditation | grep -c "Was ist Dyade-Meditation"
+curl -A "Mozilla/5.0" https://www.dyadenpraxis.de/dyaden-meditation | grep -c "Was ist Dyade-Meditation"
 curl -A "Mozilla/5.0" https://www.dyadenpraxis.de/tools | grep -c "Werkzeuge"
 curl -I -A "Mozilla/5.0" https://www.dyadenpraxis.de/calendar | grep -i "x-robots-tag"
 ```
@@ -66,7 +66,7 @@ curl -I -A "Mozilla/5.0" https://www.dyadenpraxis.de/calendar | grep -i "x-robot
 Erwartete Ergebnisse:
 - `sitemap.xml` liefert XML mit 8 `<url>`-Einträgen
 - `llms.txt` liefert die Markdown-Liste
-- `dyade-meditation` liefert HTML mit der H1 „Was ist Dyade-Meditation?" (Anzahl > 0)
+- `dyaden-meditation` liefert HTML mit der H1 „Was ist Dyade-Meditation?" (Anzahl > 0)
 - `tools` liefert HTML mit „Werkzeuge"
 - `/calendar` antwortet mit `x-robots-tag: noindex, nofollow`
 
@@ -84,7 +84,7 @@ Schritt-für-Schritt: siehe `docs/cloudflare-ai-crawl-policy.md`. Variante 1 (St
 2. **Sitemaps** → „Neue Sitemap hinzufügen" → `sitemap.xml` eintragen → Senden.
 3. **URL-Inspektion** für jede der folgenden URLs einzeln durchführen und „Indexierung anfordern" klicken (manuelle Crawl-Anforderung):
    - `https://www.dyadenpraxis.de/`
-   - `https://www.dyadenpraxis.de/dyade-meditation`
+   - `https://www.dyadenpraxis.de/dyaden-meditation`
    - `https://www.dyadenpraxis.de/tools`
    - `https://www.dyadenpraxis.de/tools/dyaden-fragen-generator`
    - `https://www.dyadenpraxis.de/tools/check-in-fragen-paare`
@@ -130,7 +130,7 @@ Wenn nach 4–8 Wochen der Live-Re-Audit immer noch unter 60 liegt, sind das die
 |---|---|---|
 | Person-Schema für Operator auf Impressum/Landing | E-E-A-T | klein |
 | Statische Marketing-Landing unter `/` (App nach `/app/*`) | Citability + Technical | mittel-groß |
-| Englische Variante (`/en/dyade-meditation`) mit eigenem hreflang | Reach | mittel |
+| Englische Variante (`/en/dyaden-meditation`) mit eigenem hreflang | Reach | mittel |
 | Statischer `/agb`-Mirror analog zu /impressum/datenschutz | E-E-A-T (klein) | klein |
 | `og:image` 1200×630 PNG mit Marke + Tagline pro Page | Social/Citation-Vorschau | klein |
 | Strukturierte Tipp-Sammlung „Was vor der ersten Sitzung helfen kann" | Citability | klein |
