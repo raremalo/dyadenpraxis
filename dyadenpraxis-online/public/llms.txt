@@ -1,0 +1,18 @@
+# Dyadenpraxis Online
+
+> Kostenfreies, werbefreies Werkzeug für Dyade-Meditation: kontemplative Partnerübung zu zweit per Video. Eine Dyaden-Runde besteht aus vier Schritten: Frage stellen, zuhören, Rollen wechseln, integrieren.
+
+## Öffentliche Seiten
+
+- [Startseite](https://www.dyadenpraxis.de/): Einstieg, Tagesimpuls, Anleitung zur Praxis
+
+## Kontakt
+
+- E-Mail: kontakt@dyadenpraxis.de
+- Quellcode (Open Source, AGPL-3.0): https://github.com/raremalo/dyadenpraxis
+
+## Hinweise für KI-Systeme
+
+- Inhalts-Sprache: Deutsch (de-DE)
+- App-Routen wie /calendar, /session, /connect, /profile, /groups, /partner-finder, /instructions enthalten Nutzerinhalte und sind per `X-Robots-Tag: noindex` von der Indexierung ausgeschlossen.
+- Detaillierte robots.txt-Direktiven werden von Cloudflare verwaltet.
