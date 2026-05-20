@@ -5,7 +5,7 @@
 ## Öffentliche Seiten
 
 - [Startseite](https://www.dyadenpraxis.de/): Einstieg in die Praxis, Tagesimpuls
-- [Was ist Dyade-Meditation?](https://www.dyadenpraxis.de/dyade-meditation): Erklärung, Ablauf, Hintergrund, häufige Fragen
+- [Was ist Dyade-Meditation?](https://www.dyadenpraxis.de/dyaden-meditation): Erklärung, Ablauf, Hintergrund, häufige Fragen
 - [Werkzeuge](https://www.dyadenpraxis.de/tools): Übersicht der kostenfreien Tools
 - [Dyaden-Fragen-Generator](https://www.dyadenpraxis.de/tools/dyaden-fragen-generator): Zufällige oder thematische Dyade-Frage aus zehn Kategorien
 - [Check-in-Leitfäden](https://www.dyadenpraxis.de/tools/check-in-fragen-paare): Strukturierte Gespräche für Paare, Freundschaft, Familie, Arbeit

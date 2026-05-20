@@ -1,8 +1,11 @@
 {
+  "redirects": [
+    { "source": "/dyade-meditation", "destination": "/dyaden-meditation", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/impressum", "destination": "/impressum.html" },
     { "source": "/datenschutz", "destination": "/datenschutz.html" },
-    { "source": "/dyade-meditation", "destination": "/dyade-meditation.html" },
+    { "source": "/dyaden-meditation", "destination": "/dyaden-meditation.html" },
     { "source": "/tools", "destination": "/tools/index.html" },
     { "source": "/tools/dyaden-fragen-generator", "destination": "/tools/dyaden-fragen-generator.html" },
     { "source": "/tools/check-in-fragen-paare", "destination": "/tools/check-in-fragen-paare.html" },
