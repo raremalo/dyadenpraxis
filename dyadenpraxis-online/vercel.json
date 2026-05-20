@@ -1,5 +1,8 @@
 {
   "rewrites": [
+    { "source": "/impressum", "destination": "/impressum.html" },
+    { "source": "/datenschutz", "destination": "/datenschutz.html" },
+    { "source": "/dyade-meditation", "destination": "/dyade-meditation.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -12,7 +15,7 @@
       ]
     },
     {
-      "source": "/(calendar|profile|connect|groups|partner-finder|instructions|reset-password|session|impressum|datenschutz|agb)(/.*)?",
+      "source": "/(calendar|profile|connect|groups|partner-finder|instructions|reset-password|session|agb)(/.*)?",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
