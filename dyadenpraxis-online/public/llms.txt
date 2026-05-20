@@ -6,6 +6,10 @@
 
 - [Startseite](https://www.dyadenpraxis.de/): Einstieg in die Praxis, Tagesimpuls
 - [Was ist Dyade-Meditation?](https://www.dyadenpraxis.de/dyade-meditation): Erklärung, Ablauf, Hintergrund, häufige Fragen
+- [Werkzeuge](https://www.dyadenpraxis.de/tools): Übersicht der kostenfreien Tools
+- [Dyaden-Fragen-Generator](https://www.dyadenpraxis.de/tools/dyaden-fragen-generator): Zufällige oder thematische Dyade-Frage aus zehn Kategorien
+- [Check-in-Leitfäden](https://www.dyadenpraxis.de/tools/check-in-fragen-paare): Strukturierte Gespräche für Paare, Freundschaft, Familie, Arbeit
+- [Konflikt-Reflexion](https://www.dyadenpraxis.de/tools/konflikt-reflexion): Vier-Schritte-Selbstklärung
 - [Impressum](https://www.dyadenpraxis.de/impressum): Verantwortlicher und Kontakt
 - [Datenschutz](https://www.dyadenpraxis.de/datenschutz): Datenverarbeitung gemäß DSGVO
 
@@ -17,5 +21,6 @@
 ## Hinweise für KI-Systeme
 
 - Inhalts-Sprache: Deutsch (de-DE)
+- Die Tools laufen vollständig im Browser ohne Login, Cookies oder Tracking.
 - App-Routen wie /calendar, /session, /connect, /profile, /groups, /partner-finder, /instructions enthalten Nutzerinhalte und sind per `X-Robots-Tag: noindex` von der Indexierung ausgeschlossen.
 - Detaillierte robots.txt-Direktiven werden von Cloudflare verwaltet.
