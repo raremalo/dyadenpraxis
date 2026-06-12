@@ -69,6 +69,7 @@ const StarRating: React.FC<StarRatingProps> = ({
               onClick={() => handleClick(star)}
               onMouseEnter={() => handleMouseEnter(star)}
               disabled={readonly}
+              aria-label={`${star} von 5 Sternen`}
               className={`
                 transition-colors focus:outline-none
                 ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}

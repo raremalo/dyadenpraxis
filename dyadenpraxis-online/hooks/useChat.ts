@@ -81,6 +81,7 @@ export function useChat(): UseChatReturn {
   const [currentBlockStatus, setCurrentBlockStatus] = useState<BlockStatus>('none');
   
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const currentPartnerIdRef = useRef<string | null>(null);
 
   // Calculate total unread count
   const totalUnreadCount = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
@@ -378,7 +379,7 @@ export function useChat(): UseChatReturn {
             setMessages(prev => [...prev, newMessage]);
             
             // Auto-mark as read if we're the recipient and chat is open
-            if (newMessage.recipient_id === user.id && currentPartnerId === partnerId) {
+            if (newMessage.recipient_id === user.id && currentPartnerIdRef.current === partnerId) {
               markAsRead(newMessage.id);
             }
           }
@@ -402,7 +403,8 @@ export function useChat(): UseChatReturn {
 
     channelRef.current = channel;
     setCurrentPartnerId(partnerId);
-  }, [user, currentPartnerId, markAsRead]);
+    currentPartnerIdRef.current = partnerId;
+  }, [user, markAsRead]);
 
   // Unsubscribe from realtime
   const unsubscribe = useCallback(() => {

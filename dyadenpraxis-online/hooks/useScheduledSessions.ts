@@ -108,6 +108,11 @@ export function useScheduledSessions(): UseScheduledSessionsReturn {
     if (!user) return null;
     setError(null);
 
+    if (new Date(input.scheduled_for) <= new Date()) {
+      setError('Termin muss in der Zukunft liegen');
+      return null;
+    }
+
     try {
       const { data, error: insertError } = await supabase
         .from('scheduled_sessions')

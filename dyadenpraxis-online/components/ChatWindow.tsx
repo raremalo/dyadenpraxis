@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { X, Send, ArrowLeft, Loader2, Ban, ShieldOff, MoreVertical, AlertCircle } from 'lucide-react';
 import { useChat, type Conversation, type Message } from '../hooks/useChat';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 import ChatMessage, { DateSeparator } from './ChatMessage';
 
 interface ChatWindowProps {
@@ -13,6 +12,23 @@ interface ChatWindowProps {
   initialPartnerName?: string | null;
 }
 
+// Group messages by date
+function groupMessagesByDate(msgs: Message[]) {
+  const groups: { date: string; messages: Message[] }[] = [];
+  let currentDate = '';
+
+  for (const msg of msgs) {
+    const msgDate = new Date(msg.created_at).toDateString();
+    if (msgDate !== currentDate) {
+      currentDate = msgDate;
+      groups.push({ date: msg.created_at, messages: [] });
+    }
+    groups[groups.length - 1].messages.push(msg);
+  }
+
+  return groups;
+}
+
 export default function ChatWindow({ 
   isOpen, 
   onClose, 
@@ -20,8 +36,7 @@ export default function ChatWindow({
   initialPartnerName = null 
 }: ChatWindowProps) {
   const { user } = useAuth();
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t } = useSettings();
   
   const {
     messages,
@@ -161,22 +176,8 @@ export default function ChatWindow({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
 
-  // Group messages by date
-  const groupMessagesByDate = (msgs: Message[]) => {
-    const groups: { date: string; messages: Message[] }[] = [];
-    let currentDate = '';
-    
-    for (const msg of msgs) {
-      const msgDate = new Date(msg.created_at).toDateString();
-      if (msgDate !== currentDate) {
-        currentDate = msgDate;
-        groups.push({ date: msg.created_at, messages: [] });
-      }
-      groups[groups.length - 1].messages.push(msg);
-    }
-    
-    return groups;
-  };
+  // Memoize grouped messages to avoid recomputing on every render
+  const groupedMessages = useMemo(() => groupMessagesByDate(messages), [messages]);
 
   // Format time for conversation list
   const formatLastMessageTime = (dateString: string) => {
@@ -199,7 +200,7 @@ export default function ChatWindow({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="chat-modal-title">
       <div className="bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md h-[600px] flex flex-col overflow-hidden">
         
         {/* Header */}
@@ -264,7 +265,7 @@ export default function ChatWindow({
             </>
           ) : (
             <>
-              <h2 className="font-medium text-stone-900 dark:text-stone-100">
+              <h2 id="chat-modal-title" className="font-medium text-stone-900 dark:text-stone-100">
                 {t.chat?.title || 'Nachrichten'}
               </h2>
               <button
@@ -377,7 +378,7 @@ export default function ChatWindow({
                   </div>
                 ) : (
                   <>
-                    {groupMessagesByDate(messages).map((group, groupIdx) => (
+                    {groupedMessages.map((group, groupIdx) => (
                       <div key={groupIdx}>
                         <DateSeparator date={group.date} />
                         {group.messages.map((msg) => (

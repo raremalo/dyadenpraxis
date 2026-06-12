@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { X, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useFeedback } from '../hooks/useFeedback';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 import StarRating from './StarRating';
 
 interface SessionFeedbackModalProps {
@@ -24,8 +23,7 @@ export default function SessionFeedbackModal({
   partnerAvatar,
   onSuccess,
 }: SessionFeedbackModalProps) {
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t } = useSettings();
   const { submitFeedback, isLoading, error } = useFeedback();
 
   const [structureRating, setStructureRating] = useState(0);
@@ -77,7 +75,7 @@ export default function SessionFeedbackModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
       <div className="bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 dark:border-stone-700">
@@ -96,7 +94,7 @@ export default function SessionFeedbackModal({
               </div>
             )}
             <div>
-              <h2 className="font-medium text-stone-900 dark:text-stone-100">
+              <h2 id="feedback-modal-title" className="font-medium text-stone-900 dark:text-stone-100">
                 {t.feedback?.rateSession || 'Session bewerten'}
               </h2>
               <p className="text-sm text-stone-500">

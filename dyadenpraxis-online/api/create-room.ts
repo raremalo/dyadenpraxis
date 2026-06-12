@@ -1,37 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { jwtVerify, createRemoteJWKSet } from 'jose';
+import { createClient } from '@supabase/supabase-js';
+import { setCorsHeaders } from './_lib/cors';
+import { verifyJWT } from './_lib/auth';
 
-// CORS Konfiguration
-const ALLOWED_ORIGINS = [
-  'https://dyadenpraxis.de',
-  'https://www.dyadenpraxis.de',
-  /^https:\/\/.*\.vercel\.app$/,
-  /^http:\/\/localhost:\d+$/,
-];
-
-function isOriginAllowed(origin: string | undefined): boolean {
-  if (!origin) return false;
-  return ALLOWED_ORIGINS.some(o => 
-    typeof o === 'string' ? o === origin : o.test(origin)
-  );
-}
-
-// JWT Verifizierung (lokal mit jose)
-const JWKS = createRemoteJWKSet(
-  new URL(`${process.env.VITE_SUPABASE_URL}/auth/v1/.well-known/jwks.json`)
+// Supabase Admin Client fuer Session-Ownership-Pruefung
+const supabaseAdmin = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-async function verifyJWT(token: string): Promise<{ sub: string } | null> {
-  try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: `${process.env.VITE_SUPABASE_URL}/auth/v1`,
-      audience: 'authenticated',
-    });
-    return payload as { sub: string };
-  } catch {
-    return null;
-  }
-}
 
 // Daily.co Room Creation
 const DAILY_API = 'https://api.daily.co/v1';
@@ -86,11 +62,7 @@ async function createMeetingToken(roomName: string, userId: string, expiresAt: n
 // Handler
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const origin = req.headers.origin as string;
-  if (isOriginAllowed(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  }
+  setCorsHeaders(origin, res);
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode nicht erlaubt' });
@@ -106,6 +78,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { sessionId, includeThird } = req.body;
+
+    // Session-Id Validierung
+    if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 64) {
+      return res.status(400).json({ error: 'Ungueltige sessionId' });
+    }
+
+    // Session-Ownership-Pruefung: User muss Teilnehmer sein
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from('sessions')
+      .select('requester_id, partner_id, third_participant_id, status')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session) {
+      return res.status(404).json({ error: 'Session nicht gefunden' });
+    }
+
+    const participants = [session.requester_id, session.partner_id];
+    if (session.third_participant_id) participants.push(session.third_participant_id);
+    if (!participants.includes(user.sub)) {
+      return res.status(403).json({ error: 'Nicht berechtigt' });
+    }
+
     const roomName = `em-${sessionId}-${Date.now()}`;
     const expiresAt = Math.floor(Date.now() / 1000) + 3600; // 1h
 

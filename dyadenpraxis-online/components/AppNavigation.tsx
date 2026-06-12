@@ -18,7 +18,7 @@ const AppNavigation: React.FC = () => {
 
   return (
     <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40 px-4">
-      <nav className="flex items-center gap-1 bg-[var(--c-bg-card)]/80 backdrop-blur-xl border border-[var(--c-border)] shadow-lg shadow-black/5 rounded-full px-4 py-2">
+      <nav role="navigation" aria-label="Hauptnavigation" className="flex items-center gap-1 bg-[var(--c-bg-card)]/80 backdrop-blur-xl border border-[var(--c-border)] shadow-lg shadow-black/5 rounded-full px-4 py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (

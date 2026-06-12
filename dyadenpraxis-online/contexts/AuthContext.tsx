@@ -82,28 +82,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (currentSession?.user) {
-          // Prüfe ob Access Token abgelaufen ist
-          const expiresAt = currentSession.expires_at;
-          if (expiresAt && expiresAt * 1000 < Date.now()) {
-            // Token abgelaufen - Refresh versuchen
-            console.warn('[Auth] Access Token abgelaufen, versuche Refresh...');
-            const { data: { session: refreshedSession }, error: refreshError } =
-              await supabase.auth.refreshSession();
-            if (refreshError || !refreshedSession) {
-              console.error('[Auth] Token Refresh fehlgeschlagen:', refreshError?.message);
-              await supabase.auth.signOut();
-              return;
-            }
-            setUser(refreshedSession.user);
-            setSession(refreshedSession);
-            const p = await fetchProfile(refreshedSession.user.id);
-            if (p) setProfile(p);
-          } else {
-            setUser(currentSession.user);
-            setSession(currentSession);
-            const p = await fetchProfile(currentSession.user.id);
-            if (p) setProfile(p);
-          }
+          setUser(currentSession.user);
+          setSession(currentSession);
+          const p = await fetchProfile(currentSession.user.id);
+          if (p) setProfile(p);
         }
       } catch (error) {
         console.error('[Auth] Init Fehler:', error);

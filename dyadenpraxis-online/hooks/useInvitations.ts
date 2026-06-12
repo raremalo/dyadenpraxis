@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -75,13 +75,13 @@ export function useInvitations(): UseInvitationsReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate stats
-  const stats: InvitationStats = {
+  // Calculate stats (memoized to avoid recomputation on every render)
+  const stats: InvitationStats = useMemo(() => ({
     total: invitations.length,
     active: invitations.filter(i => i.is_active && !i.used_at && new Date(i.expires_at) > new Date()).length,
     used: invitations.filter(i => i.used_at !== null).length,
     expired: invitations.filter(i => !i.used_at && new Date(i.expires_at) <= new Date()).length,
-  };
+  }), [invitations]);
 
   const canCreateMore = stats.active < MAX_ACTIVE_INVITATIONS;
 

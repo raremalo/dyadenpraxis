@@ -71,8 +71,9 @@ export function useCheckSessionLimit(): UseCheckSessionLimitReturn {
     }
   }, [user]);
 
-  // Load on mount when user is available
+  // Load on mount when user is available; clear cache on user change
   useEffect(() => {
+    cacheRef.current = null;  // Invalidate cache on user change
     if (user) {
       check();
     }

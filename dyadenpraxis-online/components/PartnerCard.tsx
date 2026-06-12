@@ -1,8 +1,9 @@
 import React from 'react';
-import { MessageCircle, Shield, ShieldCheck, Clock } from 'lucide-react';
+import { MessageCircle, Clock } from 'lucide-react';
 import { Partner, TrustLevel } from '../hooks/usePartnerSearch';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
+import TrustBadgeComponent from './TrustBadge';
 
 interface PartnerCardProps {
   partner: Partner;
@@ -10,26 +11,6 @@ interface PartnerCardProps {
   onSelect?: (partner: Partner) => void;
   showMatchReasons?: boolean;
 }
-
-const TrustBadge: React.FC<{ level: TrustLevel }> = ({ level }) => {
-  if (level === 'verified') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-medium">
-        <ShieldCheck className="w-3 h-3" />
-        Verifiziert
-      </span>
-    );
-  }
-  if (level === 'known') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-medium">
-        <Shield className="w-3 h-3" />
-        Bekannt
-      </span>
-    );
-  }
-  return null;
-};
 
 const PartnerCard: React.FC<PartnerCardProps> = ({
   partner,
@@ -90,7 +71,7 @@ const PartnerCard: React.FC<PartnerCardProps> = ({
       <div className="ml-4 flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h4 className="font-medium text-[var(--c-text-main)] truncate">{partner.name}</h4>
-          <TrustBadge level={partner.trust_level} />
+          <TrustBadgeComponent level={partner.trust_level} size="sm" showLabel={true} />
         </div>
 
         {partner.bio && (

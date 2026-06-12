@@ -1,14 +1,3 @@
-export enum AppView {
-  HOME = 'HOME',
-  INSTRUCTIONS = 'INSTRUCTIONS',
-  CONNECT = 'CONNECT', // Quick Match
-  PARTNER_FINDER = 'PARTNER_FINDER', // Directory
-  SESSION = 'SESSION',
-  PROFILE = 'PROFILE',
-  CALENDAR = 'CALENDAR',
-  GROUPS = 'GROUPS',
-}
-
 export enum DyadRole {
   SPEAKER = 'SPEAKER',
   LISTENER = 'LISTENER',

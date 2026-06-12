@@ -61,24 +61,24 @@ export default function InvitationManager() {
   const getInvitationStatus = (inv: InvitationWithInvitee): { label: string; color: string } => {
     if (inv.used_at) {
       return { 
-        label: t('invitations', 'used'), 
+        label: t.invitations?.used, 
         color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' 
       };
     }
     if (!inv.is_active) {
       return { 
-        label: t('invitations', 'revoked'), 
+        label: t.invitations?.revoked, 
         color: 'text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-700' 
       };
     }
     if (new Date(inv.expires_at) <= new Date()) {
       return { 
-        label: t('invitations', 'expired'), 
+        label: t.invitations?.expired, 
         color: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' 
       };
     }
     return { 
-      label: t('invitations', 'active'), 
+      label: t.invitations?.active, 
       color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20' 
     };
   };
@@ -103,11 +103,11 @@ export default function InvitationManager() {
         <div className="flex items-center gap-2">
           <UserPlus className="w-5 h-5 text-amber-600" />
           <h3 className="font-semibold text-stone-900 dark:text-stone-100">
-            {t('invitations', 'title')}
+            {t.invitations?.title}
           </h3>
         </div>
         <span className="text-sm text-stone-500 dark:text-stone-400">
-          {stats.active}/{MAX_ACTIVE} {t('invitations', 'active')}
+          {stats.active}/{MAX_ACTIVE} {t.invitations?.active}
         </span>
       </div>
 
@@ -128,19 +128,19 @@ export default function InvitationManager() {
         {isCreating ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            {t('invitations', 'creating')}
+            {t.invitations?.creating}
           </>
         ) : (
           <>
             <Plus className="w-4 h-4" />
-            {t('invitations', 'create')}
+            {t.invitations?.create}
           </>
         )}
       </button>
 
       {!canCreateMore && (
         <p className="text-sm text-stone-500 dark:text-stone-400 mb-4 text-center">
-          {t('invitations', 'limitReached')}
+          {t.invitations?.limitReached}
         </p>
       )}
 
@@ -148,15 +148,15 @@ export default function InvitationManager() {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="text-center p-2 bg-stone-50 dark:bg-stone-700/50 rounded-lg">
           <p className="text-lg font-semibold text-stone-900 dark:text-stone-100">{stats.active}</p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">{t('invitations', 'active')}</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400">{t.invitations?.active}</p>
         </div>
         <div className="text-center p-2 bg-stone-50 dark:bg-stone-700/50 rounded-lg">
           <p className="text-lg font-semibold text-green-600 dark:text-green-400">{stats.used}</p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">{t('invitations', 'used')}</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400">{t.invitations?.used}</p>
         </div>
         <div className="text-center p-2 bg-stone-50 dark:bg-stone-700/50 rounded-lg">
           <p className="text-lg font-semibold text-stone-400">{stats.expired}</p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">{t('invitations', 'expired')}</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400">{t.invitations?.expired}</p>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ export default function InvitationManager() {
         <div className="text-center py-8">
           <Link2 className="w-10 h-10 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
           <p className="text-stone-500 dark:text-stone-400">
-            {t('invitations', 'noInvitations')}
+            {t.invitations?.noInvitations}
           </p>
         </div>
       ) : (
@@ -203,7 +203,7 @@ export default function InvitationManager() {
                         <button
                           onClick={() => handleCopy(inv.token)}
                           className="p-1.5 rounded-md hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
-                          title={t('invitations', 'copyLink')}
+                          title={t.invitations?.copyLink}
                         >
                           {copiedToken === inv.token ? (
                             <Check className="w-4 h-4 text-green-600" />
@@ -215,7 +215,7 @@ export default function InvitationManager() {
                           onClick={() => handleRevoke(inv.id)}
                           disabled={revokingId === inv.id}
                           className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
-                          title={t('invitations', 'revoke')}
+                          title={t.invitations?.revoke}
                         >
                           {revokingId === inv.id ? (
                             <Loader2 className="w-4 h-4 animate-spin text-red-500" />
@@ -236,7 +236,7 @@ export default function InvitationManager() {
                   
                   {isActive && (
                     <span>
-                      {daysRemaining(inv.expires_at)} {t('invitations', 'daysLeft')}
+                      {daysRemaining(inv.expires_at)} {t.invitations?.daysLeft}
                     </span>
                   )}
 
@@ -293,7 +293,7 @@ export function InviteAcceptCard({
           is_valid: result.is_valid,
         });
       } else {
-        setError(t('invitations', 'invalidToken'));
+        setError(t.invitations?.invalidToken);
       }
       setIsValidating(false);
     };
@@ -307,7 +307,7 @@ export function InviteAcceptCard({
     if (success) {
       onAccepted();
     } else {
-      setError(t('invitations', 'redeemFailed'));
+      setError(t.invitations?.redeemFailed);
     }
     setIsRedeeming(false);
   };
@@ -316,7 +316,7 @@ export function InviteAcceptCard({
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-stone-800 rounded-2xl shadow-lg">
         <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-4" />
-        <p className="text-stone-600 dark:text-stone-400">{t('invitations', 'validating')}</p>
+        <p className="text-stone-600 dark:text-stone-400">{t.invitations?.validating}</p>
       </div>
     );
   }
@@ -326,16 +326,16 @@ export function InviteAcceptCard({
       <div className="flex flex-col items-center p-8 bg-white dark:bg-stone-800 rounded-2xl shadow-lg">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-2">
-          {t('invitations', 'invalidTitle')}
+          {t.invitations?.invalidTitle}
         </h3>
         <p className="text-sm text-stone-600 dark:text-stone-400 text-center mb-4">
-          {error || t('invitations', 'invalidToken')}
+          {error || t.invitations?.invalidToken}
         </p>
         <button
           onClick={onDismissed}
           className="px-4 py-2 bg-stone-200 dark:bg-stone-700 rounded-lg text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600"
         >
-          {t('invitations', 'close')}
+          {t.invitations?.close}
         </button>
       </div>
     );
@@ -346,16 +346,16 @@ export function InviteAcceptCard({
       <div className="flex flex-col items-center p-8 bg-white dark:bg-stone-800 rounded-2xl shadow-lg">
         <Clock className="w-12 h-12 text-stone-400 mb-4" />
         <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-2">
-          {t('invitations', 'expiredTitle')}
+          {t.invitations?.expiredTitle}
         </h3>
         <p className="text-sm text-stone-600 dark:text-stone-400 text-center mb-4">
-          {t('invitations', 'expiredDesc')}
+          {t.invitations?.expiredDesc}
         </p>
         <button
           onClick={onDismissed}
           className="px-4 py-2 bg-stone-200 dark:bg-stone-700 rounded-lg text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600"
         >
-          {t('invitations', 'close')}
+          {t.invitations?.close}
         </button>
       </div>
     );
@@ -379,13 +379,13 @@ export function InviteAcceptCard({
       )}
 
       <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-1">
-        {t('invitations', 'invitedBy')}
+        {t.invitations?.invitedBy}
       </h3>
       <p className="text-lg font-medium text-amber-600 dark:text-amber-400 mb-4">
         {validation.inviter_name}
       </p>
       <p className="text-sm text-stone-600 dark:text-stone-400 text-center mb-6">
-        {t('invitations', 'inviteMessage')}
+        {t.invitations?.inviteMessage}
       </p>
 
       <div className="flex gap-3 w-full">
@@ -393,7 +393,7 @@ export function InviteAcceptCard({
           onClick={onDismissed}
           className="flex-1 px-4 py-2.5 bg-stone-200 dark:bg-stone-700 rounded-lg text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600 font-medium"
         >
-          {t('invitations', 'decline')}
+          {t.invitations?.decline}
         </button>
         <button
           onClick={handleAccept}
@@ -405,7 +405,7 @@ export function InviteAcceptCard({
           ) : (
             <UserPlus className="w-4 h-4" />
           )}
-          {t('invitations', 'accept')}
+          {t.invitations?.accept}
         </button>
       </div>
     </div>

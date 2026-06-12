@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { CheckCircle, Users } from 'lucide-react';
 import type { PeerVerification } from '../hooks/usePeerVerification';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 
 interface VerificationBadgeProps {
   verifications: PeerVerification[];
@@ -15,8 +14,7 @@ const VerificationBadge: React.FC<VerificationBadgeProps> = ({
   showCount = true,
   size = 'md',
 }) => {
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t } = useSettings();
   const [showTooltip, setShowTooltip] = useState(false);
 
   const count = verifications.length;

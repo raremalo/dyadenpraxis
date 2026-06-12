@@ -1,19 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-// CORS Konfiguration
-const ALLOWED_ORIGINS = [
-  'https://dyadenpraxis.de',
-  'https://www.dyadenpraxis.de',
-  /^https:\/\/.*\.vercel\.app$/,
-  /^http:\/\/localhost:\d+$/,
-];
-
-function isOriginAllowed(origin: string | undefined): boolean {
-  if (!origin) return false;
-  return ALLOWED_ORIGINS.some(o =>
-    typeof o === 'string' ? o === origin : o.test(origin)
-  );
-}
+import { setCorsHeaders } from './_lib/cors';
 
 // Valid category keys (allowlist)
 const VALID_CATEGORY_KEYS = new Set([
@@ -87,11 +73,7 @@ function isRateLimited(ip: string): boolean {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   const origin = req.headers.origin as string;
-  if (isOriginAllowed(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  }
+  setCorsHeaders(origin, res);
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

@@ -197,10 +197,13 @@ const GongTimerControl: React.FC<GongTimerControlProps> = ({
         <span className="text-xs opacity-50 uppercase tracking-wider">{t.gong.sound}</span>
         <div className="grid grid-cols-2 gap-2 mt-1.5">
           {sounds.map(sound => (
-            <button
+            <div
               key={sound.id}
+              role="button"
+              tabIndex={0}
               onClick={() => onSetSound(sound.id)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs border transition-colors ${
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSetSound(sound.id); }}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs border transition-colors cursor-pointer ${
                 config.soundId === sound.id
                   ? 'border-current/40 bg-current/10 font-medium'
                   : 'border-current/10 hover:border-current/30 hover:bg-black/5 dark:hover:bg-white/10'
@@ -214,7 +217,7 @@ const GongTimerControl: React.FC<GongTimerControlProps> = ({
               >
                 <Volume2 className="w-3 h-3 opacity-60" />
               </button>
-            </button>
+            </div>
           ))}
         </div>
       </div>

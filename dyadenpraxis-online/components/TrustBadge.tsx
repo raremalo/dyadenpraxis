@@ -1,7 +1,6 @@
 import React from 'react';
 import { Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 import type { TrustLevel } from '../hooks/usePeerVerification';
 
 interface TrustBadgeProps {
@@ -17,8 +16,7 @@ const TrustBadge: React.FC<TrustBadgeProps> = ({
   showLabel = true,
   showIcon = true,
 }) => {
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t } = useSettings();
 
   const sizeClasses = {
     sm: 'px-1.5 py-0.5 text-xs gap-1',

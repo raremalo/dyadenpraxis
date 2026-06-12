@@ -83,6 +83,7 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
   const [recent, setRecent] = useState<Partner[]>([]);
 
   // Stable ref for filters — prevents search callback from depending on filters object
+  const loadingRef = useRef(false);
   const filtersRef = useRef(filters);
   useEffect(() => {
     filtersRef.current = filters;
@@ -128,8 +129,9 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
   }, [user]);
 
   const loadMore = useCallback(async () => {
-    if (!user || isLoading || partners.length >= totalCount) return;
+    if (!user || loadingRef.current || partners.length >= totalCount) return;
 
+    loadingRef.current = true;
     setIsLoading(true);
 
     try {
@@ -155,9 +157,10 @@ export function usePartnerSearch(): UsePartnerSearchReturn {
       const msg = err instanceof Error ? err.message : 'Laden fehlgeschlagen';
       setError(msg);
     } finally {
+      loadingRef.current = false;
       setIsLoading(false);
     }
-  }, [user, isLoading, partners.length, totalCount, offset]);
+  }, [user, partners.length, totalCount, offset]);
 
   const loadRecommended = useCallback(async () => {
     if (!user) return;

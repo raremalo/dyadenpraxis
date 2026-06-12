@@ -276,8 +276,13 @@ export function useSession(): UseSessionReturn {
 
       if (updateError) throw new Error(updateError.message);
 
-      // Increment sessions_completed for all participants
-      const session = sessions.find(s => s.id === sessionId);
+      // Fetch session fresh from DB to get participant IDs (avoids stale state)
+      const { data: session } = await supabase
+        .from('sessions')
+        .select('requester_id, partner_id, third_participant_id')
+        .eq('id', sessionId)
+        .single();
+
       if (session) {
         try {
           const userIds = [session.requester_id, session.partner_id];
@@ -301,7 +306,7 @@ export function useSession(): UseSessionReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [user, loadSessions, sessions]);
+  }, [user, loadSessions]);
 
   const cancelSession = useCallback(async (sessionId: string): Promise<boolean> => {
     if (!user) return false;

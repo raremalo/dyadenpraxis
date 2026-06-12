@@ -3,7 +3,6 @@ import { X, Calendar, Clock, MessageSquare, Loader2 } from 'lucide-react';
 import { useScheduledSessions } from '../hooks/useScheduledSessions';
 import { useAvailability, WEEKDAYS, type OverlappingSlot } from '../hooks/useAvailability';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -22,8 +21,7 @@ export default function ScheduleModal({
   partnerAvatar,
   onSuccess,
 }: ScheduleModalProps) {
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t, language } = useSettings();
   const weekdays = WEEKDAYS[language];
   
   const { proposeSession, error: sessionError } = useScheduledSessions();
@@ -99,7 +97,7 @@ export default function ScheduleModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
       <div className="bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 dark:border-stone-700">
@@ -118,7 +116,7 @@ export default function ScheduleModal({
               </div>
             )}
             <div>
-              <h2 className="font-medium text-stone-900 dark:text-stone-100">
+              <h2 id="schedule-modal-title" className="font-medium text-stone-900 dark:text-stone-100">
                 {t.calendar?.scheduleWith || 'Termin mit'} {partnerName}
               </h2>
               <p className="text-sm text-stone-500">

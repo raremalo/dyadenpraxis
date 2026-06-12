@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Star, ThumbsUp, Loader2 } from 'lucide-react';
 import { useFeedback, type UserRatingSummary } from '../hooks/useFeedback';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 import { StarDisplay } from './StarRating';
 
 interface FeedbackSummaryProps {
@@ -11,8 +10,7 @@ interface FeedbackSummaryProps {
 }
 
 export default function FeedbackSummary({ userId, compact = false }: FeedbackSummaryProps) {
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t } = useSettings();
   const { getUserRatingSummary } = useFeedback();
   
   const [summary, setSummary] = useState<UserRatingSummary | null>(null);

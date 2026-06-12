@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Clock, Loader2 } from 'lucide-react';
 import { useAvailability, WEEKDAYS, WEEKDAYS_SHORT, type AvailabilitySlot } from '../hooks/useAvailability';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 
 interface AvailabilitySlotEditorProps {
   onSave?: () => void;
 }
 
 export default function AvailabilitySlotEditor({ onSave }: AvailabilitySlotEditorProps) {
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t, language } = useSettings();
   const weekdays = WEEKDAYS[language];
   const weekdaysShort = WEEKDAYS_SHORT[language];
   
@@ -31,6 +29,7 @@ export default function AvailabilitySlotEditor({ onSave }: AvailabilitySlotEdito
     end_time: '12:00',
   });
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Group slots by day
   const slotsByDay = slots.reduce((acc, slot) => {
@@ -43,6 +42,14 @@ export default function AvailabilitySlotEditor({ onSave }: AvailabilitySlotEdito
 
   // Handle add new slot
   const handleAddSlot = async () => {
+    setValidationError(null);
+
+    // Validate start_time < end_time
+    if (newSlot.start_time >= newSlot.end_time) {
+      setValidationError(t.calendar?.invalidTimeRange || 'Startzeit muss vor Endzeit liegen');
+      return;
+    }
+
     setSavingId('new');
     const result = await createSlot({
       day_of_week: newSlot.day_of_week,
@@ -101,9 +108,9 @@ export default function AvailabilitySlotEditor({ onSave }: AvailabilitySlotEdito
         </button>
       </div>
 
-      {error && (
+      {(error || validationError) && (
         <div className="p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm">
-          {error}
+          {validationError || error}
         </div>
       )}
 
@@ -135,7 +142,7 @@ export default function AvailabilitySlotEditor({ onSave }: AvailabilitySlotEdito
               <input
                 type="time"
                 value={newSlot.start_time}
-                onChange={(e) => setNewSlot(prev => ({ ...prev, start_time: e.target.value }))}
+                onChange={(e) => { setNewSlot(prev => ({ ...prev, start_time: e.target.value })); setValidationError(null); }}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-sm"
               />
             </div>
@@ -148,7 +155,7 @@ export default function AvailabilitySlotEditor({ onSave }: AvailabilitySlotEdito
               <input
                 type="time"
                 value={newSlot.end_time}
-                onChange={(e) => setNewSlot(prev => ({ ...prev, end_time: e.target.value }))}
+                onChange={(e) => { setNewSlot(prev => ({ ...prev, end_time: e.target.value })); setValidationError(null); }}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-sm"
               />
             </div>

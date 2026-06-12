@@ -21,6 +21,7 @@ const UserProfile: React.FC = () => {
   const { limitInfo } = useCheckSessionLimit();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -44,8 +45,8 @@ const UserProfile: React.FC = () => {
   const estimatedMinutes = (profile?.sessions_completed ?? 0) * (profile?.preferred_duration ?? 20);
 
   const handleDeleteAccount = async () => {
-    if (confirmText !== 'LOESCHEN') return;
-    const success = await deleteAccount();
+    if (confirmText !== 'LOESCHEN' || !deletePassword) return;
+    const success = await deleteAccount(deletePassword);
     if (success) {
       setShowDeleteConfirm(false);
     }
@@ -240,20 +241,33 @@ const UserProfile: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="text-xs text-[var(--c-text-muted)] mb-1 block">
+                  {t.deleteAccount?.passwordLabel || 'Gib dein Passwort ein:'}
+                </label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Passwort"
+                  className="w-full px-4 py-2 rounded-xl bg-[var(--c-bg-app)] border border-[var(--c-border)] text-[var(--c-text-main)] text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+
               {deleteError && (
                 <p className="text-rose-500 text-sm">{deleteError}</p>
               )}
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => { setShowDeleteConfirm(false); setConfirmText(''); }}
+                  onClick={() => { setShowDeleteConfirm(false); setConfirmText(''); setDeletePassword(''); }}
                   className="flex-1 py-2.5 bg-[var(--c-bg-app)] text-[var(--c-text-main)] rounded-xl text-sm font-medium border border-[var(--c-border)] hover:bg-[var(--c-bg-card-hover)] transition-colors"
                 >
                   {t.deleteAccount?.cancel || 'Abbrechen'}
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={confirmText !== 'LOESCHEN' || isDeleting}
+                  disabled={confirmText !== 'LOESCHEN' || !deletePassword || isDeleting}
                   className="flex-1 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}

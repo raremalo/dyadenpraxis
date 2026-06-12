@@ -4,14 +4,19 @@ import { supabase } from '../lib/supabase';
 interface UseAccountDeletionReturn {
   isDeleting: boolean;
   error: string | null;
-  deleteAccount: () => Promise<boolean>;
+  deleteAccount: (password: string) => Promise<boolean>;
 }
 
 export function useAccountDeletion(): UseAccountDeletionReturn {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deleteAccount = useCallback(async (): Promise<boolean> => {
+  const deleteAccount = useCallback(async (password: string): Promise<boolean> => {
+    if (!password) {
+      setError('Passwort erforderlich');
+      return false;
+    }
+
     setIsDeleting(true);
     setError(null);
 
@@ -28,6 +33,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
+        body: JSON.stringify({ password }),
       });
 
       if (!response.ok) {

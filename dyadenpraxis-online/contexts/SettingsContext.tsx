@@ -39,7 +39,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [gongConfig, setGongConfigState] = useState<GongTimerConfig>(() => {
     const saved = localStorage.getItem('dyad_gong_config');
     if (saved) {
-      try { return JSON.parse(saved) as GongTimerConfig; } catch { /* fallthrough */ }
+      try {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.intervalSeconds === 'number' && parsed.intervalSeconds > 0) {
+          return parsed as GongTimerConfig;
+        }
+      } catch { /* fallthrough */ }
     }
     return DEFAULT_GONG_CONFIG;
   });
@@ -51,7 +56,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     localStorage.setItem('dyad_theme', theme);
     // Apply theme class to body
-    document.body.className = `theme-${theme}`;
+    document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm', 'theme-nature');
+    document.body.classList.add(`theme-${theme}`);
   }, [theme]);
 
   useEffect(() => {

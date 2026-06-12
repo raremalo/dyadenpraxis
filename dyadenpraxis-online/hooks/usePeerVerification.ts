@@ -204,24 +204,25 @@ export function usePeerVerification(): UsePeerVerificationReturn {
   // Get verification stats for a user
   const getVerificationStats = useCallback(async (userId: string): Promise<VerificationStats | null> => {
     try {
-      // Get all active verifications for this user
-      const { data: verifications, error: fetchError } = await supabase
-        .from('peer_verifications')
-        .select(`
-          id,
-          verifier:profiles!verifier_id(trust_level)
-        `)
-        .eq('verified_user_id', userId)
-        .eq('is_active', true);
-
-      if (fetchError) throw new Error(fetchError.message);
-
-      // Get user's current trust level
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('trust_level')
-        .eq('id', userId)
-        .single();
+      // Get all active verifications for this user and their profile in parallel
+      const [
+        { data: verifications, error: fetchError },
+        { data: profile },
+      ] = await Promise.all([
+        supabase
+          .from('peer_verifications')
+          .select(`
+            id,
+            verifier:profiles!verifier_id(trust_level)
+          `)
+          .eq('verified_user_id', userId)
+          .eq('is_active', true),
+        supabase
+          .from('profiles')
+          .select('trust_level')
+          .eq('id', userId)
+          .single(),
+      ]);
 
       const totalCount = verifications?.length || 0;
       const verifiedByCount = verifications?.filter(

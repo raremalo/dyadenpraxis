@@ -56,8 +56,8 @@ const SessionInviteBanner: React.FC<SessionInviteBannerProps> = ({ onAccepted })
   const handleDecline = async () => {
     if (!pendingInvite) return;
     
-    // We need to cancel the session from the partner side
-    // This requires the cancelSession function
+    // Session tatsaechlich ablehnen/stornieren
+    await cancelCurrentSession(pendingInvite.id);
     setIsDismissed(true);
     setPendingInvite(null);
   };

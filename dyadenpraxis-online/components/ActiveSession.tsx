@@ -13,9 +13,14 @@ interface ActiveSessionProps {
   onClose?: () => void;
 }
 
+// Format remaining time as m:ss — module-level, no component deps
+const formatSessionTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
 const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
-  const { t } = useSettings();
-  const { user } = useAuth();
   const {
     currentSession,
     isInSession,
@@ -47,12 +52,8 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   const countdownHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerStartedAtRef = useRef<number | null>(null);
 
-  // Format remaining time as m:ss
-  const formatSessionTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
+  const { t } = useSettings();
+  const { user } = useAuth();
 
   // Load prompt for DyadTimer
   useEffect(() => {

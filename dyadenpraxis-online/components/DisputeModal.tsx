@@ -71,7 +71,7 @@ export default function DisputeModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="dispute-modal-title">
       <div className="bg-[var(--c-bg-card)] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-[var(--c-border)]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--c-border)]">
@@ -80,7 +80,7 @@ export default function DisputeModal({
               <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             </div>
             <div>
-              <h2 className="font-medium text-[var(--c-text-main)]">
+              <h2 id="dispute-modal-title" className="font-medium text-[var(--c-text-main)]">
                 {t.dispute?.title || 'Nutzer melden'}
               </h2>
               <p className="text-sm text-[var(--c-text-muted)]">

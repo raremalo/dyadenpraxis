@@ -126,9 +126,7 @@ export function useDyadTimerEngine(): UseDyadTimerEngineReturn {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          // Schedule transition for next tick
-          setTimeout(() => handleTransition(), 0);
-          return 0;
+          return 0;  // Triggers re-render, effect handles transition
         }
         return prev - 1;
       });

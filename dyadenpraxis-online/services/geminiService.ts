@@ -10,11 +10,15 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptRespo
     categoryKey = undefined;
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
   try {
     const response = await fetch('/api/generate-prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ categoryKey }),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -25,6 +29,7 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptRespo
     return data;
 
   } catch (error) {
+    clearTimeout(timeoutId);
     console.error('[GeminiService] Prompt abrufen fehlgeschlagen:', error instanceof Error ? error.message : "Unknown error");
     // Fallback to local pool
     const fallback = getRandomQuestion(categoryKey);

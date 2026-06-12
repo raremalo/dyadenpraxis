@@ -243,10 +243,13 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
             </label>
             <div className="grid grid-cols-2 gap-2">
               {GONG_SOUNDS.map(sound => (
-                <button
+                <div
                   key={sound.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => updateConfig({ soundUrl: sound.url })}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all ${
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') updateConfig({ soundUrl: sound.url }); }}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${
                     config.soundUrl === sound.url
                       ? 'bg-white/20 border border-white/40'
                       : 'border border-white/10 hover:border-white/30'
@@ -259,7 +262,7 @@ const DyadTimer: React.FC<DyadTimerProps> = ({ onExit, prompt, sessionDuration =
                     <Volume2 className="w-3.5 h-3.5" />
                   </button>
                   <span className="truncate">{sound.name}</span>
-                </button>
+                </div>
               ))}
             </div>
           </div>

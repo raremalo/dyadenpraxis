@@ -3,7 +3,6 @@ import { ShieldCheck, Users, TrendingUp, Loader2, UserCheck, UserX } from 'lucid
 import { usePeerVerification, type PeerVerification, type VerificationStats } from '../hooks/usePeerVerification';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 import TrustBadge from './TrustBadge';
 
 interface ProfileVerificationCardProps {
@@ -18,8 +17,7 @@ export default function ProfileVerificationCard({
   onVerificationChange,
 }: ProfileVerificationCardProps) {
   const { user } = useAuth();
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t } = useSettings();
   
   const {
     verifyUser,

@@ -16,14 +16,12 @@ import {
 import { useScheduledSessions, type ScheduledSession } from '../hooks/useScheduledSessions';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { translations } from '../translations';
 import AvailabilitySlotEditor from './AvailabilitySlotEditor';
 
 const Calendar: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { language } = useSettings();
-  const t = translations[language];
+  const { t, language } = useSettings();
 
   const {
     scheduledSessions,

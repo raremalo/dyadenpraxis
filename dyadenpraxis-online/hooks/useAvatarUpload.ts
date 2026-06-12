@@ -30,6 +30,9 @@ async function compressImage(file: File): Promise<Blob> {
     }
 
     img.onload = () => {
+      const blobUrl = img.src;
+      URL.revokeObjectURL(blobUrl);
+
       let { width, height } = img;
 
       // Skalierung berechnen

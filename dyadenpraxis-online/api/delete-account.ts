@@ -1,38 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { createClient } from '@supabase/supabase-js';
-
-// CORS Konfiguration
-const ALLOWED_ORIGINS = [
-  'https://dyadenpraxis.de',
-  'https://www.dyadenpraxis.de',
-  /^https:\/\/.*\.vercel\.app$/,
-  /^http:\/\/localhost:\d+$/,
-];
-
-function isOriginAllowed(origin: string | undefined): boolean {
-  if (!origin) return false;
-  return ALLOWED_ORIGINS.some(o =>
-    typeof o === 'string' ? o === origin : o.test(origin)
-  );
-}
-
-// JWT Verifizierung
-const JWKS = createRemoteJWKSet(
-  new URL(`${process.env.VITE_SUPABASE_URL}/auth/v1/.well-known/jwks.json`)
-);
-
-async function verifyJWT(token: string): Promise<{ sub: string } | null> {
-  try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: `${process.env.VITE_SUPABASE_URL}/auth/v1`,
-      audience: 'authenticated',
-    });
-    return payload as { sub: string };
-  } catch {
-    return null;
-  }
-}
+import { setCorsHeaders } from './_lib/cors';
+import { verifyJWT } from './_lib/auth';
 
 // Supabase Admin Client (Service Role)
 const supabaseAdmin = createClient(
@@ -49,11 +18,7 @@ const supabaseAdmin = createClient(
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const origin = req.headers.origin as string;
-  if (isOriginAllowed(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  }
+  setCorsHeaders(origin, res);
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Methode nicht erlaubt' });
@@ -70,6 +35,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = user.sub;
 
   try {
+    // Re-Auth: Passwort-Bestaetigung erforderlich
+    const { password } = req.body;
+    if (!password || typeof password !== 'string' || password.length < 1) {
+      return res.status(400).json({ error: 'Passwort-Bestaetigung erforderlich' });
+    }
+
+    // Passwort ueber Supabasae Auth verifizieren (normaler Client, nicht Admin)
+    const supabaseAuth = createClient(
+      process.env.VITE_SUPABASE_URL!,
+      process.env.VITE_SUPABASE_ANON_KEY!
+    );
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const userEmail = userData.user?.email;
+    if (!userEmail) {
+      return res.status(400).json({ error: 'Benutzer-E-Mail nicht gefunden' });
+    }
+
+    const { error: pwError } = await supabaseAuth.auth.signInWithPassword({
+      email: userEmail,
+      password,
+    });
+    if (pwError) {
+      return res.status(401).json({ error: 'Passwort inkorrekt' });
+    }
     // 1. Avatar aus Storage loeschen (best effort)
     try {
       const { data: profile } = await supabaseAdmin
@@ -80,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (profile?.avatar_url) {
         const url = new URL(profile.avatar_url);
-        const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/avatars\/(.+)/);
+        const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/avatars\/([^?#]+)/);
         if (pathMatch) {
           await supabaseAdmin.storage.from('avatars').remove([pathMatch[1]]);
         }
