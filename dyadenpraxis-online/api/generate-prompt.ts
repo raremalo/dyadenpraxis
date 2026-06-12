@@ -86,6 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    console.log('[generate-prompt] Key present:', !!GEMINI_API_KEY, 'length:', GEMINI_API_KEY?.length ?? 0);
 
     let { categoryKey } = req.body || {};
 
