@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { SignJWT } from 'jose';
 import { createClient } from '@supabase/supabase-js';
-import { setCorsHeaders } from './_lib/cors';
-import { verifyJWT } from './_lib/auth';
+import { setCorsHeaders } from './_lib/cors.js';
+import { verifyJWT } from './_lib/auth.js';
 
 // Supabase Admin Client (Service Role)
 const supabaseAdmin = createClient(

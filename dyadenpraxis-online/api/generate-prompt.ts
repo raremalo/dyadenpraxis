@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { setCorsHeaders } from './_lib/cors';
+import { setCorsHeaders } from './_lib/cors.js';
 
 // Valid category keys (allowlist)
 const VALID_CATEGORY_KEYS = new Set([

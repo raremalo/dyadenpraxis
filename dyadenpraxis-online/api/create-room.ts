@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { setCorsHeaders } from './_lib/cors';
-import { verifyJWT } from './_lib/auth';
+import { setCorsHeaders } from './_lib/cors.js';
+import { verifyJWT } from './_lib/auth.js';
 
 // Supabase Admin Client fuer Session-Ownership-Pruefung
 const supabaseAdmin = createClient(
