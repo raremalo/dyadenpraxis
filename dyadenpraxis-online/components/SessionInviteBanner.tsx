@@ -3,7 +3,7 @@ import { X, Check, Clock, Zap, User } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useSession, Session } from '../hooks/useSession';
+import { useSession, type Session } from '../hooks/useSession';
 
 interface SessionInviteBannerProps {
   onAccepted?: () => void;
@@ -18,7 +18,8 @@ const SessionInviteBanner: React.FC<SessionInviteBannerProps> = ({ onAccepted })
   const { t } = useSettings();
   const { user } = useAuth();
   const { sessions, loadSessions } = useSession();
-  const { acceptInvite, cancelCurrentSession, isLoading } = useSessionContext();
+  const { acceptInvite, isLoading } = useSessionContext();
+  const { cancelSession } = useSession();
   
   const [pendingInvite, setPendingInvite] = useState<Session | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -57,7 +58,7 @@ const SessionInviteBanner: React.FC<SessionInviteBannerProps> = ({ onAccepted })
     if (!pendingInvite) return;
     
     // Session tatsaechlich ablehnen/stornieren
-    await cancelCurrentSession(pendingInvite.id);
+    await cancelSession(pendingInvite.id);
     setIsDismissed(true);
     setPendingInvite(null);
   };

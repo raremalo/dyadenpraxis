@@ -41,6 +41,7 @@ export function useDyadTimerEngine(): UseDyadTimerEngineReturn {
   const roundRef = useRef(1);
   const nextAfterTransitionRef = useRef<DyadRole>(DyadRole.SPEAKER);
   const currentRoleRef = useRef<DyadRole>(DyadRole.CONTEMPLATION);
+  const transitioningRef = useRef(false);
 
   // Keep refs in sync
   useEffect(() => { configRef.current = config; }, [config]);
@@ -56,11 +57,14 @@ export function useDyadTimerEngine(): UseDyadTimerEngineReturn {
   }, []);
 
   const handleTransition = useCallback(() => {
+    if (transitioningRef.current) return;
+    transitioningRef.current = true;
+
     const cfg = configRef.current;
     const role = currentRoleRef.current;
     const r = roundRef.current;
     const nextRole = nextAfterTransitionRef.current;
-    if (!cfg) return;
+    if (!cfg) { transitioningRef.current = false; return; }
 
     // Gong at every transition
     playBell();
@@ -110,6 +114,9 @@ export function useDyadTimerEngine(): UseDyadTimerEngineReturn {
       default:
         break;
     }
+
+    // Reset guard after state updates are scheduled
+    setTimeout(() => { transitioningRef.current = false; }, 0);
   }, [playBell]);
 
   // Countdown effect
