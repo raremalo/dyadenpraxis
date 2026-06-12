@@ -86,9 +86,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
-    }
 
     let { categoryKey } = req.body || {};
 
@@ -122,6 +119,18 @@ Die Frage soll:
 Gib auch einen kurzen Kontext oder eine Kontemplationsanweisung dazu.
 
 Die Kategorie der Antwort soll "${category.name}" sein.`;
+
+    // Skip Gemini if no API key configured (graceful fallback to curated questions)
+    if (!GEMINI_API_KEY) {
+      const key = CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
+      const cat = CATEGORIES[key];
+      const q = cat.questions[Math.floor(Math.random() * cat.questions.length)];
+      return res.status(200).json({
+        question: q,
+        context: 'Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?',
+        category: cat.name,
+      });
+    }
 
     // Call Gemini API via REST
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
