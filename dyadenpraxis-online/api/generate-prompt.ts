@@ -177,6 +177,7 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
     return res.status(200).json(result);
 
   } catch (error) {
+    console.log('[generate-prompt] Gemini failed:', error instanceof Error ? error.message : String(error));
     // Fallback: return a random curated question
     const key = CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
     const cat = CATEGORIES[key];
