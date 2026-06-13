@@ -173,10 +173,11 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
       category: parsed.category || category.name,
     };
 
-    return res.status(200).json(result);
+    return res.status(200).json({ ...result, _source: 'gemini' });
 
   } catch (error) {
-    console.log('[generate-prompt] Gemini failed:', error instanceof Error ? error.message : String(error));
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.log('[generate-prompt] Gemini failed:', errMsg);
     // Fallback: return a random curated question
     const key = CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
     const cat = CATEGORIES[key];
@@ -186,6 +187,8 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
       question: q,
       context: 'Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?',
       category: cat.name,
+      _source: 'fallback',
+      _error: errMsg,
     });
   }
 }
