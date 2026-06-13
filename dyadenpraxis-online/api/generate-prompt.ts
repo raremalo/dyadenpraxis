@@ -133,7 +133,7 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
     }
 
     // Call Gemini API via REST
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
 
     const geminiRes = await fetch(apiUrl, {
       method: 'POST',
@@ -173,11 +173,9 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
       category: parsed.category || category.name,
     };
 
-    return res.status(200).json({ ...result, _source: 'gemini' });
+    return res.status(200).json(result);
 
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    console.log('[generate-prompt] Gemini failed:', errMsg);
     // Fallback: return a random curated question
     const key = CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
     const cat = CATEGORIES[key];
@@ -187,8 +185,6 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
       question: q,
       context: 'Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?',
       category: cat.name,
-      _source: 'fallback',
-      _error: errMsg,
     });
   }
 }
