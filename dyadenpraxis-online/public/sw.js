@@ -121,6 +121,22 @@ self.addEventListener('notificationclick', (event) => {
     targetUrl = '/calendar';
   }
 
+  // Same-Origin-Check — verhindert Open Redirect via boesartiges Push-Payload.
+  // targetUrl kann aus notification data stammen; ohne Validierung wuerde
+  // clients.navigate/openWindow eine beliebige externe URL oeffnen.
+  try {
+    const resolved = new URL(targetUrl, self.location.origin);
+    if (resolved.origin !== self.location.origin) {
+      console.warn('[SW] Cross-origin target blocked:', resolved.origin);
+      targetUrl = '/';
+    } else {
+      targetUrl = resolved.pathname + resolved.search + resolved.hash;
+    }
+  } catch (e) {
+    console.warn('[SW] Invalid targetUrl, falling back to /:', e);
+    targetUrl = '/';
+  }
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Existierendes Fenster fokussieren wenn vorhanden
