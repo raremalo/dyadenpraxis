@@ -13,8 +13,10 @@ dist-ssr/
 # Vercel
 .vercel
 
-# Beads (local DB)
+# Beads (local DB + auto-generated state)
 .beads/beads.db
+.beads/interactions.jsonl
+.beads/export-state.json
 
 # Logs
 logs
@@ -38,6 +40,9 @@ lerna-debug.log*
 # OS
 .DS_Store
 
+# SEO audit (local)
+docs/GEO-AUDIT-REPORT-LIVE.md
+
 # Supabase
 supabase/.temp/
 
@@ -51,4 +56,5 @@ supabase/.temp/
 .pi/
 .autoresearch/
 .rpiv/
+.zap/
 thoughts/
