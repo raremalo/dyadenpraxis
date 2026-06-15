@@ -66,28 +66,33 @@ export function useFeedback(): UseFeedbackReturn {
         throw new Error('Bewertungen muessen zwischen 1 und 5 liegen');
       }
 
-      const { data, error: insertError } = await supabase
-        .from('session_feedback')
-        .insert({
-          session_id: input.session_id,
-          rated_user_id: input.rated_user_id,
-          reviewer_id: user.id,
-          structure_rating: input.structure_rating,
-          presence_rating: input.presence_rating,
-          overall_rating: input.overall_rating,
-          would_practice_again: input.would_practice_again,
-        })
-        .select()
-        .single();
+      const { data, error: rpcError } = await supabase.rpc('submit_session_feedback', {
+        p_session_id: input.session_id,
+        p_rated_user_id: input.rated_user_id,
+        p_structure_rating: input.structure_rating,
+        p_presence_rating: input.presence_rating,
+        p_overall_rating: input.overall_rating,
+        p_would_practice_again: input.would_practice_again,
+      });
 
-      if (insertError) {
-        if (insertError.code === '23505') {
-          throw new Error('Du hast diese Session bereits bewertet');
-        }
-        throw new Error(insertError.message);
+      if (rpcError) throw new Error(rpcError.message);
+
+      const result = data as { success: boolean; error?: string; feedback?: SessionFeedback };
+      if (!result.success) {
+        // Map server-side error codes to German messages
+        const errorMessages: Record<string, string> = {
+          'already_rated': 'Du hast diese Session bereits bewertet',
+          'session_not_completed': 'Die Session muss abgeschlossen sein',
+          'not_participant': 'Du warst nicht Teilnehmer dieser Session',
+          'cannot_rate_self': 'Du kannst dich nicht selbst bewerten',
+          'rated_user_not_participant': 'Dieser Nutzer war nicht in der Session',
+          'invalid_rating': 'Bewertungen muessen zwischen 1 und 5 liegen',
+          'session_not_found': 'Session nicht gefunden',
+        };
+        throw new Error(errorMessages[result.error || ''] || 'Feedback senden fehlgeschlagen');
       }
 
-      return data;
+      return result.feedback || null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Feedback senden fehlgeschlagen';
       setError(msg);

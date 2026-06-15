@@ -5,10 +5,25 @@ const DAILY_API_KEY = Deno.env.get("DAILY_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// CORS: nur Produktion + www — gespiegelt von api/_lib/cors.ts
+const ALLOWED_ORIGINS = [
+  "https://dyadenpraxis.de",
+  "https://www.dyadenpraxis.de",
+];
+
+function getEdgeCorsHeaders(
+  req: Request,
+): Record<string, string> {
+  const origin = req.headers.get("origin") || "";
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
+}
 
 interface RequestBody {
   sessionId: string;
@@ -16,6 +31,8 @@ interface RequestBody {
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getEdgeCorsHeaders(req);
+
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });

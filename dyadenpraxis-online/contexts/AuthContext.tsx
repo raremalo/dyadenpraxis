@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { usePresence } from '../hooks/usePresence';
@@ -53,6 +53,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
+  // Race-Guard: monoton steigende Event-ID. Nur der letzte onAuthStateChange-Event
+  // darf setProfile aufrufen — verhindert, dass ein träger SIGNED_IN fetchProfile
+  // einen SIGNED_OUT-Reset überschreibt (L1-01 async race).
+  const authEventIdRef = useRef(0);
+
   // Supabase Presence: Live-Online-Status tracking
   const { onlineUserIds } = usePresence(user?.id);
 
@@ -103,11 +108,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
+        // SYNCHRONER Callback — Supabase warnt vor async onAuthStateChange (Deadlock-Risiko).
+        const eventId = ++authEventIdRef.current;
+
         // Handle TOKEN_REFRESHED failure (Refresh Token missing/invalid)
         if (event === 'TOKEN_REFRESHED' && !newSession) {
           console.warn('[Auth] Token Refresh fehlgeschlagen - Session ungültig');
-          await supabase.auth.signOut();
+          void supabase.auth.signOut();
           setProfile(null);
           return;
         }
@@ -125,8 +133,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(newSession?.user ?? null);
 
         if (event === 'SIGNED_IN' && newSession?.user) {
-          const p = await fetchProfile(newSession.user.id);
-          if (p) setProfile(p);
+          // userId im SYNCHRONEN Scope extrahieren (hier gilt das newSession?.user
+          // Narrowing). strictNullChecks überträgt Param-Narrowing NICHT in nested
+          // async Closures — daher vor der IIFE hoisten.
+          const userId = newSession.user.id;
+          // Async fetchProfile in IIFE — nicht awaited. eventId-Guard verwirft
+          // Ergebnisse von veralteten Events (z.B. SIGNED_IN nach SIGNED_OUT).
+          void (async () => {
+            const p = await fetchProfile(userId);
+            if (eventId === authEventIdRef.current && p) {
+              setProfile(p);
+            }
+          })();
         } else if (event === 'SIGNED_OUT' || !newSession) {
           setProfile(null);
           setIsPasswordRecovery(false);
@@ -195,9 +213,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProfile = useCallback(async (updates: Partial<DbUserProfile>) => {
     if (!user) return { error: 'Nicht angemeldet' };
+
+    // ALLOWLIST: only user-editable columns pass through.
+    // Defense-in-depth alongside DB BEFORE UPDATE trigger (Migration 015).
+    const ALLOWED_FIELDS: (keyof DbUserProfile)[] = [
+      'name', 'avatar_url', 'bio', 'is_available',
+      'preferred_levels', 'preferred_duration', 'em_experience_months',
+    ];
+    const safeUpdates: Partial<DbUserProfile> = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (key in updates) {
+        (safeUpdates as Record<string, unknown>)[key] = updates[key];
+      }
+    }
+    if (Object.keys(safeUpdates).length === 0) {
+      return { error: null };
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(safeUpdates)
       .eq('id', user.id);
     if (error) return { error: error.message };
     await refreshProfile();

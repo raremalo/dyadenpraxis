@@ -111,7 +111,9 @@ export function useChat(): UseChatReturn {
       if (blockedByMe) return 'blocked_by_me';
       if (blockedByPartner) return 'blocked_by_partner';
       return 'none';
-    } catch {
+    } catch (err) {
+      // Non-critical: Block-Status-Check schlägt fehl → Default 'none' (Least-Restriction).
+      console.warn('[useChat] checkBlockStatus fehlgeschlagen, nehme "none" an:', err);
       return 'none';
     }
   }, [user]);
@@ -250,8 +252,9 @@ export function useChat(): UseChatReturn {
         .eq('id', messageId)
         .eq('recipient_id', user.id)
         .is('read_at', null);
-    } catch {
-      // Silently fail - not critical
+    } catch (err) {
+      // Non-critical: read-Status ist Cosmetic, beeinflusst keine Security.
+      console.warn('[useChat] markAsRead fehlgeschlagen (non-critical):', err);
     }
   }, [user]);
 
@@ -271,8 +274,9 @@ export function useChat(): UseChatReturn {
       setConversations(prev => prev.map(conv => 
         conv.partnerId === partnerId ? { ...conv, unreadCount: 0 } : conv
       ));
-    } catch {
-      // Silently fail - not critical
+    } catch (err) {
+      // Non-critical: read-Status ist Cosmetic, beeinflusst keine Security.
+      console.warn('[useChat] markConversationAsRead fehlgeschlagen (non-critical):', err);
     }
   }, [user]);
 

@@ -12,6 +12,23 @@ const DEFAULT_GONG_CONFIG: GongTimerConfig = {
   soundId: 'big-bowl',
 };
 
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    // QuotaExceeded / Privacy-Modus / localStorage disabled → stiller Fallback
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // QuotaExceeded / Privacy-Modus — nicht-kritisch, ignoriert
+  }
+}
+
 interface SettingsContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -27,17 +44,17 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Try to load from localStorage or default
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('dyad_lang');
+    const saved = safeGetItem('dyad_lang');
     return (saved === 'en' || saved === 'de') ? saved : 'de';
   });
 
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem('dyad_theme');
+    const saved = safeGetItem('dyad_theme');
     return (saved === 'light' || saved === 'dark' || saved === 'warm' || saved === 'nature') ? saved : 'light';
   });
 
   const [gongConfig, setGongConfigState] = useState<GongTimerConfig>(() => {
-    const saved = localStorage.getItem('dyad_gong_config');
+    const saved = safeGetItem('dyad_gong_config');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -50,18 +67,18 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   });
 
   useEffect(() => {
-    localStorage.setItem('dyad_lang', language);
+    safeSetItem('dyad_lang', language);
   }, [language]);
 
   useEffect(() => {
-    localStorage.setItem('dyad_theme', theme);
+    safeSetItem('dyad_theme', theme);
     // Apply theme class to body
     document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm', 'theme-nature');
     document.body.classList.add(`theme-${theme}`);
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem('dyad_gong_config', JSON.stringify(gongConfig));
+    safeSetItem('dyad_gong_config', JSON.stringify(gongConfig));
   }, [gongConfig]);
 
   const setLanguage = (lang: Language) => setLanguageState(lang);

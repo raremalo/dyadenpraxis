@@ -1,5 +1,5 @@
 import React from 'react';
-import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorFallbackProps {
@@ -80,16 +80,17 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
   fallbackMessage,
   onReset 
 }) => {
-  const handleError = (error: Error, info: React.ErrorInfo) => {
+  const handleError = (error: unknown, info: React.ErrorInfo) => {
     console.error('[ErrorBoundary] Fehler gefangen:', error);
     console.error('[ErrorBoundary] Component Stack:', info.componentStack);
   };
 
   return (
     <ReactErrorBoundary
-      FallbackComponent={(props) => (
+      FallbackComponent={(props: FallbackProps) => (
         <ErrorFallback 
           {...props} 
+          error={props.error as Error}
           title={fallbackTitle} 
           message={fallbackMessage} 
         />

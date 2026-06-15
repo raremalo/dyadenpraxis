@@ -239,6 +239,7 @@ export function useSession(): UseSessionReturn {
           partner_token: partnerToken,
         })
         .eq('id', sessionId)
+        .eq('requester_id', user.id)  // ownership filter (defense-in-depth)
         .select(`
           *,
           requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
@@ -272,31 +273,14 @@ export function useSession(): UseSessionReturn {
           status: 'completed',
           ended_at: new Date().toISOString(),
         })
-        .eq('id', sessionId);
+        .eq('id', sessionId)
+        .or(`requester_id.eq.${user.id},partner_id.eq.${user.id},third_participant_id.eq.${user.id}`);
 
       if (updateError) throw new Error(updateError.message);
 
-      // Fetch session fresh from DB to get participant IDs (avoids stale state)
-      const { data: session } = await supabase
-        .from('sessions')
-        .select('requester_id, partner_id, third_participant_id')
-        .eq('id', sessionId)
-        .single();
+      // sessions_completed increment is now handled by the AFTER UPDATE trigger
+      // (Migration 014: increment_on_complete) — no client-side RPC call needed.
 
-      if (session) {
-        try {
-          const userIds = [session.requester_id, session.partner_id];
-          if (session.third_participant_id) {
-            userIds.push(session.third_participant_id);
-          }
-          await supabase.rpc('increment_sessions_completed', {
-            user_ids: userIds,
-          });
-        } catch {
-          // RPC might not exist, ignore
-        }
-      }
-      
       await loadSessions();
       return true;
     } catch (err) {
@@ -485,6 +469,7 @@ export function useSession(): UseSessionReturn {
           third_participant_token: thirdToken,
         })
         .eq('id', sessionId)
+        .eq('requester_id', user.id)  // ownership filter (defense-in-depth)
         .select(`
           *,
           requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
@@ -520,7 +505,9 @@ export function useSession(): UseSessionReturn {
 
       if (fetchError) throw new Error(fetchError.message);
       return data as Session;
-    } catch {
+    } catch (err) {
+      // Non-critical lookup; surface für Debugging, nicht zum UI.
+      console.error('[useSession] getSession fehlgeschlagen:', err);
       return null;
     }
   }, []);

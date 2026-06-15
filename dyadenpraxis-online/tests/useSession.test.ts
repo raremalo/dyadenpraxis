@@ -169,7 +169,7 @@ describe('useSession', () => {
     });
 
     expect(createdSession).not.toBeNull();
-    expect(createdSession?.id).toBe('s-new');
+    expect((createdSession as Session | null)?.id).toBe('s-new');
     expect(mockRpc).toHaveBeenCalledWith('create_session_limited', {
       p_requester_id: 'user-123',
       p_partner_id: 'p1',
