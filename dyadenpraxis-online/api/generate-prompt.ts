@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { setCorsHeaders } from './_lib/cors.js';
+import { verifyJWT } from './_lib/auth.js';
 
 // Valid category keys (allowlist)
 const VALID_CATEGORY_KEYS = new Set([
@@ -78,6 +79,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // JWT Auth (wie create-room.ts, delete-account.ts)
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Autorisierung fehlt' });
+  }
+  const user = await verifyJWT(authHeader.slice(7));
+  if (!user) return res.status(401).json({ error: 'Ungültiges Token' });
+
   // Rate limiting
   const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 'unknown';
   if (isRateLimited(clientIp)) {
@@ -132,12 +141,15 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
       });
     }
 
-    // Call Gemini API via REST
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+    // Call Gemini API via REST — API key in header (not URL) to prevent log leakage
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`;
 
     const geminiRes = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY,
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {

@@ -1,5 +1,6 @@
 import { PromptResponse } from "../types";
 import { getRandomQuestion, DYAD_CATEGORIES } from '../data/dyadQuestions';
+import { supabase } from '../lib/supabase';
 
 // Valid category keys for client-side validation
 const VALID_KEYS = new Set(DYAD_CATEGORIES.map(c => c.key));
@@ -14,9 +15,17 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptRespo
   const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Nicht angemeldet');
+    }
+
     const response = await fetch('/api/generate-prompt', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({ categoryKey }),
       signal: controller.signal,
     });
