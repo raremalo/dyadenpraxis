@@ -5,6 +5,7 @@
   "rewrites": [
     { "source": "/impressum", "destination": "/impressum.html" },
     { "source": "/datenschutz", "destination": "/datenschutz.html" },
+    { "source": "/agb", "destination": "/agb.html" },
     { "source": "/dyaden-meditation", "destination": "/dyaden-meditation.html" },
     { "source": "/tools", "destination": "/tools/index.html" },
     { "source": "/tools/dyaden-fragen-generator", "destination": "/tools/dyaden-fragen-generator.html" },
@@ -24,7 +25,7 @@
       ]
     },
     {
-      "source": "/(calendar|profile|connect|groups|partner-finder|instructions|reset-password|session|agb)(/.*)?",
+      "source": "/(calendar|profile|connect|groups|partner-finder|instructions|reset-password|session)(/.*)?",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]

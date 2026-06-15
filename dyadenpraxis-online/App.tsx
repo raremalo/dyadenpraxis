@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { Users, BookOpen, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
 import Footer from './components/Footer';
+import { PUBLIC_PATHS, NAV_HIDDEN_PATHS } from './lib/routing';
 
 // Lazy-loaded Route-Komponenten
 const PartnerConnect = React.lazy(() => import('./components/PartnerConnect'));
@@ -22,9 +23,6 @@ const Calendar = React.lazy(() => import('./components/Calendar'));
 const PracticeGroups = React.lazy(() => import('./components/PracticeGroups'));
 const PartnerFinder = React.lazy(() => import('./components/PartnerFinder'));
 const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
-const Impressum = React.lazy(() => import('./components/legal/Impressum'));
-const Datenschutz = React.lazy(() => import('./components/legal/Datenschutz'));
-const Terms = React.lazy(() => import('./components/legal/Terms'));
 
 // Suspense-Fallback
 const RouteFallback: React.FC = () => (
@@ -151,12 +149,9 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Oeffentliche Routen die ohne Auth erreichbar sind
-  const PUBLIC_PATHS = ['/reset-password', '/impressum', '/datenschutz', '/agb'];
-
   // Auth-Guard: Nicht eingeloggt -> Login-Screen (ausser PUBLIC_PATHS)
   // Wird als Ternary im return verwendet, damit Footer auf allen Seiten sichtbar ist
-  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
+  const isPublicPath = (PUBLIC_PATHS as readonly string[]).includes(location.pathname);
   const showAuth = !user && !isPublicPath;
 
   const handleConnected = () => {
@@ -164,8 +159,7 @@ const AppContent: React.FC = () => {
   };
 
   // Determine if nav should be hidden
-  const hideNav = ['/session', '/connect', '/instructions', '/reset-password',
-    '/impressum', '/datenschutz', '/agb'].some(p => location.pathname.startsWith(p));
+  const hideNav = (NAV_HIDDEN_PATHS as readonly string[]).some(p => location.pathname.startsWith(p));
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[var(--c-bg-app)] text-[var(--c-text-main)] font-sans transition-colors duration-500">
@@ -236,39 +230,6 @@ const AppContent: React.FC = () => {
                 >
                   <Suspense fallback={<RouteFallback />}>
                     <ResetPassword />
-                  </Suspense>
-                </ErrorBoundary>
-              } />
-              <Route path="/impressum" element={
-                <ErrorBoundary
-                  fallbackTitle="Fehler"
-                  fallbackMessage="Die Seite konnte nicht geladen werden. Bitte versuche es erneut."
-                  onReset={() => navigate('/')}
-                >
-                  <Suspense fallback={<RouteFallback />}>
-                    <Impressum />
-                  </Suspense>
-                </ErrorBoundary>
-              } />
-              <Route path="/datenschutz" element={
-                <ErrorBoundary
-                  fallbackTitle="Fehler"
-                  fallbackMessage="Die Seite konnte nicht geladen werden. Bitte versuche es erneut."
-                  onReset={() => navigate('/')}
-                >
-                  <Suspense fallback={<RouteFallback />}>
-                    <Datenschutz />
-                  </Suspense>
-                </ErrorBoundary>
-              } />
-              <Route path="/agb" element={
-                <ErrorBoundary
-                  fallbackTitle="Fehler"
-                  fallbackMessage="Die Seite konnte nicht geladen werden. Bitte versuche es erneut."
-                  onReset={() => navigate('/')}
-                >
-                  <Suspense fallback={<RouteFallback />}>
-                    <Terms />
                   </Suspense>
                 </ErrorBoundary>
               } />
