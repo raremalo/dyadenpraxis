@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Loader2, Video, VideoOff, Mic, MicOff, PhoneOff, AlertCircle, Maximize, Minimize, Timer, Settings, EyeOff, Eye, X, Ear, MessageCircle } from 'lucide-react';
+import { Loader2, EyeOff } from 'lucide-react';
 import {
   DailyProvider,
   DailyAudio,
@@ -18,6 +18,9 @@ import {
 import { useSettings } from '../contexts/SettingsContext';
 import { Wifi, WifiOff } from 'lucide-react';
 import { DyadRole } from '../types';
+import VideoStatusScreens from './VideoRoom/VideoStatusScreens';
+import VideoSettingsPanel from './VideoRoom/VideoSettingsPanel';
+import VideoControls from './VideoRoom/VideoControls';
 
 interface VideoRoomProps {
   sessionId: string;
@@ -178,6 +181,17 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
       .catch(() => setPermissionGranted(false));
   }, []);
 
+  // Retry: Berechtigungen erneut anfordern (fuer permission-denied Screen)
+  const retryPermissions = useCallback(() => {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true, video: true })
+      .then((stream) => {
+        stream.getTracks().forEach((t) => t.stop());
+        setPermissionGranted(true);
+      })
+      .catch(() => setPermissionGranted(false));
+  }, []);
+
   // Auto-join when permissions granted and daily is ready
   useEffect(() => {
     if (permissionGranted && daily && meetingState === 'new') {
@@ -321,66 +335,22 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
 
   // Permission checking
   if (permissionGranted === null) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
-        <Loader2 className="w-8 h-8 text-[var(--c-accent)] animate-spin mb-4" />
-        <p className="text-[var(--c-text-muted)]">{t.video?.checkingPermissions || 'Berechtigungen pruefen...'}</p>
-      </div>
-    );
+    return <VideoStatusScreens status="checking" onRetry={retryPermissions} onLeave={handleLeave} />;
   }
 
   // Permission denied
   if (permissionGranted === false) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
-        <AlertCircle className="w-12 h-12 text-rose-500 mb-4" />
-        <h3 className="text-lg font-medium mb-2">{t.video?.permissionDenied || 'Zugriff verweigert'}</h3>
-        <p className="text-[var(--c-text-muted)] text-center text-sm max-w-xs">
-          {t.video?.permissionDeniedText || 'Bitte erlaube den Zugriff auf Kamera und Mikrofon in deinen Browser-Einstellungen.'}
-        </p>
-        <button
-          onClick={() => {
-            navigator.mediaDevices
-              .getUserMedia({ audio: true, video: true })
-              .then((stream) => {
-                stream.getTracks().forEach((t) => t.stop());
-                setPermissionGranted(true);
-              })
-              .catch(() => setPermissionGranted(false));
-          }}
-          className="mt-4 px-4 py-2 bg-[var(--c-accent)] text-[var(--c-accent-fg)] rounded-xl text-sm font-medium"
-        >
-          {t.video?.retry || 'Erneut versuchen'}
-        </button>
-      </div>
-    );
+    return <VideoStatusScreens status="denied" onRetry={retryPermissions} onLeave={handleLeave} />;
   }
 
   // Error state
   if (callError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
-        <AlertCircle className="w-12 h-12 text-rose-500 mb-4" />
-        <h3 className="text-lg font-medium mb-2">{t.video?.error || 'Fehler'}</h3>
-        <p className="text-[var(--c-text-muted)] text-center text-sm max-w-xs">{callError}</p>
-        <button
-          onClick={handleLeave}
-          className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-medium"
-        >
-          {t.video?.close || 'Schliessen'}
-        </button>
-      </div>
-    );
+    return <VideoStatusScreens status="error" errorMessage={callError} onRetry={retryPermissions} onLeave={handleLeave} />;
   }
 
   // Loading / connecting
   if (meetingState !== 'joined-meeting') {
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-[var(--c-bg-card)] rounded-2xl p-8">
-        <Loader2 className="w-8 h-8 text-[var(--c-accent)] animate-spin mb-4" />
-        <p className="text-[var(--c-text-muted)]">{t.video?.connecting || 'Verbinde...'}</p>
-      </div>
-    );
+    return <VideoStatusScreens status="connecting" onRetry={retryPermissions} onLeave={handleLeave} />;
   }
 
   // Joined — PIP layout: remote video fullscreen, self-view as small overlay
@@ -459,225 +429,42 @@ const VideoUI: React.FC<VideoUIProps> = ({ onLeave, onError, onTimerToggle, curr
 
       {/* Settings Panel (overlay above controls) */}
       {showSettings && (
-        <div ref={settingsPanelRef} className="absolute bottom-20 left-4 right-4 bg-[var(--c-bg-card)] rounded-2xl border border-[var(--c-border)] shadow-xl p-5 space-y-5 z-20 max-h-[60vh] overflow-y-auto">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-[var(--c-text-main)] uppercase tracking-widest">{t.video?.settings || 'Einstellungen'}</h4>
-            <button onClick={() => setShowSettings(false)} className="p-1 rounded-lg hover:bg-[var(--c-bg-app)] transition-colors">
-              <X className="w-4 h-4 text-[var(--c-text-muted)]" />
-            </button>
-          </div>
-
-          {/* Kamera-Auswahl */}
-          {cameras.length > 0 && (
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.camera || 'Kamera'}</label>
-              <select
-                value={currentCam?.device?.deviceId || ''}
-                onChange={(e) => setCamera(e.target.value)}
-                className="w-full px-3 py-2 bg-[var(--c-bg-app)] text-[var(--c-text-main)] border border-[var(--c-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--c-accent)]"
-              >
-                {cameras.map((cam) => (
-                  <option key={cam.device.deviceId} value={cam.device.deviceId}>
-                    {cam.device.label || 'Kamera'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Mikrofon-Auswahl */}
-          {microphones.length > 0 && (
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.microphone || 'Mikrofon'}</label>
-              <select
-                value={currentMic?.device?.deviceId || ''}
-                onChange={(e) => setMicrophone(e.target.value)}
-                className="w-full px-3 py-2 bg-[var(--c-bg-app)] text-[var(--c-text-main)] border border-[var(--c-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--c-accent)]"
-              >
-                {microphones.map((mic) => (
-                  <option key={mic.device.deviceId} value={mic.device.deviceId}>
-                    {mic.device.label || 'Mikrofon'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Lautsprecher-Auswahl */}
-          {speakers.length > 0 && (
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.speaker || 'Lautsprecher'}</label>
-              <select
-                value={currentSpeaker?.device?.deviceId || ''}
-                onChange={(e) => setSpeaker(e.target.value)}
-                className="w-full px-3 py-2 bg-[var(--c-bg-app)] text-[var(--c-text-main)] border border-[var(--c-border)] rounded-xl text-sm focus:outline-none focus:border-[var(--c-accent)]"
-              >
-                {speakers.map((spk) => (
-                  <option key={spk.device.deviceId} value={spk.device.deviceId}>
-                    {spk.device.label || 'Lautsprecher'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Hintergrund-Effekte */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.background || 'Hintergrund'}</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  if (bgEffect !== 'none') toggleBackgroundBlur();
-                }}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  bgEffect === 'none'
-                    ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
-                    : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
-                }`}
-              >
-                {t.video?.bgNone || 'Keiner'}
-              </button>
-              <button
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  bgEffect === 'blur'
-                    ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
-                    : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
-                }`}
-                onClick={() => {
-                  if (bgEffect !== 'blur') toggleBackgroundBlur();
-                }}
-              >
-                {t.video?.bgBlur || 'Blur'}
-              </button>
-            </div>
-          </div>
-
-          {/* Rauschunterdrueckung */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-[var(--c-text-muted)]">{t.video?.noiseCancellation || 'Rauschunterdrueckung'}</label>
-            <button
-              onClick={toggleNoiseCancellation}
-              className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
-                noiseCancellation
-                  ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
-                  : 'bg-[var(--c-bg-app)] text-[var(--c-text-muted)] hover:text-[var(--c-text-main)]'
-              }`}
-            >
-              {noiseCancellation ? (t.video?.ncOn || 'Aktiv') : (t.video?.ncOff || 'Aus')}
-            </button>
-          </div>
-
-        </div>
+        <VideoSettingsPanel
+          panelRef={settingsPanelRef}
+          cameras={cameras}
+          microphones={microphones}
+          speakers={speakers}
+          currentCam={currentCam}
+          currentMic={currentMic}
+          currentSpeaker={currentSpeaker}
+          setCamera={setCamera}
+          setMicrophone={setMicrophone}
+          setSpeaker={setSpeaker}
+          bgEffect={bgEffect}
+          onToggleBackgroundBlur={toggleBackgroundBlur}
+          noiseCancellation={noiseCancellation}
+          onToggleNoiseCancellation={toggleNoiseCancellation}
+          onClose={() => setShowSettings(false)}
+        />
       )}
 
-      {/* Controls */}
-      <div className="flex items-center justify-center gap-3 p-4 bg-[var(--c-bg-app)] border-t border-[var(--c-border)]">
-        {/* Participants count */}
-        <span className="text-sm text-[var(--c-text-muted)] mr-auto">
-          {remoteParticipantIds.length + (localSessionId ? 1 : 0)} {t.video?.participants || 'Teilnehmer'}
-        </span>
-
-        {/* Phase indicator — speaker/listener (lokal oder via AppMessage vom Partner) */}
-        {effectivePhase && (
-          <div
-            className={`p-3 rounded-full transition-all duration-700 cursor-default ${
-              effectivePhase === DyadRole.SPEAKER
-                ? 'bg-orange-500 text-white'
-                : effectivePhase === DyadRole.LISTENER
-                ? 'bg-blue-500 text-white'
-                : ''
-            }`}
-            title={effectivePhase === DyadRole.SPEAKER ? 'Sprechen' : 'Zuhören'}
-          >
-            {effectivePhase === DyadRole.SPEAKER
-              ? <MessageCircle className="w-5 h-5" />
-              : <Ear className="w-5 h-5" />
-            }
-          </div>
-        )}
-
-        {/* Timer/Gong toggle */}
-        {onTimerToggle && (
-          <button
-            onClick={onTimerToggle}
-            className="p-3 rounded-full bg-[var(--c-accent)]/15 text-[var(--c-accent)] hover:bg-[var(--c-accent)]/25 transition-colors"
-            title={t.timer?.label || 'Intervall-Gong'}
-          >
-            <Timer className="w-5 h-5" />
-          </button>
-        )}
-
-        {/* Settings toggle */}
-        <button
-          ref={settingsButtonRef}
-          onClick={() => setShowSettings(!showSettings)}
-          className={`p-3 rounded-full transition-colors ${
-            showSettings
-              ? 'bg-[var(--c-accent)] text-[var(--c-accent-fg)]'
-              : 'bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)]'
-          }`}
-          title={t.video?.settings || 'Einstellungen'}
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-
-        {/* Self-view toggle */}
-        <button
-          onClick={() => setHideSelf(!hideSelf)}
-          className={`p-3 rounded-full transition-colors ${
-            hideSelf
-              ? 'bg-amber-500/20 text-amber-500'
-              : 'bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)]'
-          }`}
-          title={hideSelf ? (t.video?.showSelf || 'Eigenes Video einblenden') : (t.video?.hideSelf || 'Eigenes Video ausblenden')}
-        >
-          {hideSelf ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-        </button>
-
-        {/* Audio toggle */}
-        <button
-          onClick={toggleAudio}
-          className={`p-3 rounded-full transition-colors ${
-            isAudioEnabled
-              ? 'bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)]'
-              : 'bg-rose-500 text-white'
-          }`}
-          title={isAudioEnabled ? (t.video?.muteAudio || 'Stummschalten') : (t.video?.unmuteAudio || 'Ton aktivieren')}
-        >
-          {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-        </button>
-
-        {/* Video toggle */}
-        <button
-          onClick={toggleVideo}
-          className={`p-3 rounded-full transition-colors ${
-            isVideoEnabled
-              ? 'bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)]'
-              : 'bg-rose-500 text-white'
-          }`}
-          title={isVideoEnabled ? (t.video?.disableVideo || 'Video deaktivieren') : (t.video?.enableVideo || 'Video aktivieren')}
-        >
-          {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-        </button>
-
-        {/* Fullscreen toggle */}
-        <button
-          onClick={toggleFullscreen}
-          className="p-3 rounded-full bg-[var(--c-bg-card)] text-[var(--c-text-main)] hover:bg-[var(--c-bg-card-hover)] transition-colors"
-          title={isFullscreen ? (t.video?.exitFullscreen || 'Vollbild beenden') : (t.video?.fullscreen || 'Vollbild')}
-        >
-          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-        </button>
-
-        {/* Leave call */}
-        <button
-          onClick={handleLeave}
-          className="p-3 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-colors ml-auto"
-          title={t.video?.leave || 'Verlassen'}
-        >
-          <PhoneOff className="w-5 h-5" />
-        </button>
-      </div>
+      <VideoControls
+        participantCount={remoteParticipantIds.length + (localSessionId ? 1 : 0)}
+        effectivePhase={effectivePhase}
+        onTimerToggle={onTimerToggle}
+        showSettings={showSettings}
+        onToggleSettings={() => setShowSettings(!showSettings)}
+        settingsButtonRef={settingsButtonRef}
+        hideSelf={hideSelf}
+        onToggleHideSelf={() => setHideSelf(!hideSelf)}
+        isAudioEnabled={isAudioEnabled}
+        onToggleAudio={toggleAudio}
+        isVideoEnabled={isVideoEnabled}
+        onToggleVideo={toggleVideo}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        onLeave={handleLeave}
+      />
     </div>
   );
 };
