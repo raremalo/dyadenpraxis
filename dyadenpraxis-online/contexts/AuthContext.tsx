@@ -2,29 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { usePresence } from '../hooks/usePresence';
-
-export interface DbUserProfile {
-  id: string;
-  name: string;
-  email: string;
-  avatar_url: string | null;
-  bio: string | null;
-  trust_level: 'new' | 'known' | 'verified';
-  confirmations: number;
-  is_online: boolean;
-  is_available: boolean;
-  preferred_levels: number[];
-  preferred_duration: number;
-  sessions_completed: number;
-  compliance_rate: number;
-  em_experience_months: number;
-  // Session rate limiting (Migration 012)
-  role?: 'user' | 'admin';
-  daily_session_limit?: number | null;
-  monthly_session_limit?: number | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { DbUserProfile } from '../types';
 
 interface AuthContextType {
   user: User | null;

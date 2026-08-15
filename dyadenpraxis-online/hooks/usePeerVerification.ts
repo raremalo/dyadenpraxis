@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-
-export type TrustLevel = 'new' | 'known' | 'verified';
+import type { TrustLevel } from '../types';
 
 export interface PeerVerification {
   id: string;

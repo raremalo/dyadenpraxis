@@ -1,11 +1,11 @@
-import { PromptResponse } from "../types";
+import { DyadPrompt } from "../types";
 import { getRandomQuestion, DYAD_CATEGORIES } from '../data/dyadQuestions';
 import { supabase } from '../lib/supabase';
 
 // Valid category keys for client-side validation
 const VALID_KEYS = new Set(DYAD_CATEGORIES.map(c => c.key));
 
-export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptResponse> => {
+export const fetchDyadPrompt = async (categoryKey?: string): Promise<DyadPrompt> => {
   // Validate categoryKey against allowlist
   if (categoryKey && !VALID_KEYS.has(categoryKey)) {
     categoryKey = undefined;
@@ -34,7 +34,7 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<PromptRespo
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json() as PromptResponse;
+    const data = await response.json() as DyadPrompt;
     return data;
 
   } catch (error) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
-import type { TrustLevel } from '../hooks/usePeerVerification';
+import type { TrustLevel } from '../types';
 
 interface TrustBadgeProps {
   level: TrustLevel;

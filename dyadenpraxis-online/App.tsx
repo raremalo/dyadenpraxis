@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import CategoryPicker from './components/CategoryPicker';
 import { fetchDyadPrompt } from './services/geminiService';
 import { getRandomQuestion } from './data/dyadQuestions';
+import type { DyadPrompt } from './types';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SessionProvider } from './contexts/SessionContext';
@@ -34,7 +35,7 @@ const RouteFallback: React.FC = () => (
 // Home View Component
 const HomeView: React.FC = () => {
   const navigate = useNavigate();
-  const [dailyPrompt, setDailyPrompt] = useState<{question: string, context?: string, category?: string} | null>(null);
+  const [dailyPrompt, setDailyPrompt] = useState<DyadPrompt | null>(null);
   const [isPromptLoading, setIsPromptLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [useAi, setUseAi] = useState(true);

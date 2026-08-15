@@ -159,10 +159,6 @@ export function getRandomQuestion(categoryKey?: string): DyadQuestion {
   return picked;
 }
 
-export function getCategoryByKey(key: string): DyadCategory | undefined {
-  return DYAD_CATEGORIES.find((c) => c.key === key);
-}
-
 export function getAllQuestions(): DyadQuestion[] {
   return DYAD_CATEGORIES.flatMap((category) =>
     category.questions.map((text) => ({ text, category: category.name }))

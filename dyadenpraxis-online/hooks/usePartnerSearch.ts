@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-
-export type TrustLevel = 'new' | 'known' | 'verified';
+import type { TrustLevel } from '../types';
 
 export interface Partner {
   id: string;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Star, Filter, Loader2, Users, Clock } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
-import { usePartnerSearch, Partner, TrustLevel } from '../hooks/usePartnerSearch';
+import { usePartnerSearch, Partner } from '../hooks/usePartnerSearch';
+import type { TrustLevel } from '../types';
 import PartnerCard from './PartnerCard';
 
 interface PartnerFinderProps {

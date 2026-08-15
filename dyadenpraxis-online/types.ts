@@ -1,3 +1,10 @@
+/**
+ * Geteilte Domänen-Typen — single source of truth für Domänen-Vokabular
+ * (Architecture-Review L1-01: Hook-lokale Definitionen ziehen hierher).
+ */
+
+// --- Dyaden-Session (Timer) ---
+
 export enum DyadRole {
   SPEAKER = 'SPEAKER',
   LISTENER = 'LISTENER',
@@ -14,7 +21,7 @@ export interface DyadConfig {
   soundUrl: string;              // Gewählter Klang-URL
 }
 
-// --- Gong Timer Types ---
+// --- Gong Timer ---
 
 export type GongMode = 'single' | 'repeating';
 
@@ -30,45 +37,45 @@ export interface GongTimerConfig {
   soundId: string;
 }
 
-export interface GongTimerState {
-  isActive: boolean;
-  timeRemaining: number;
-  completedIntervals: number;
-  config: GongTimerConfig;
-}
-
 export interface GongEvent {
   type: 'start' | 'stop' | 'complete' | 'repeat';
   timestamp: number;
   config: GongTimerConfig;
 }
 
-export interface PromptResponse {
+// --- Trust (3-Tier-System; DB-Enum: migrations/001_init.sql) ---
+
+export type TrustLevel = 'new' | 'known' | 'verified';
+
+// --- Profil (profiles-Tabelle) ---
+
+export interface DbUserProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
+  bio: string | null;
+  trust_level: TrustLevel;
+  confirmations: number;
+  is_online: boolean;
+  is_available: boolean;
+  preferred_levels: number[];
+  preferred_duration: number;
+  sessions_completed: number;
+  compliance_rate: number;
+  em_experience_months: number;
+  // Session rate limiting (Migration 012)
+  role?: 'user' | 'admin';
+  daily_session_limit?: number | null;
+  monthly_session_limit?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- Dyaden-Prompt (Wire-Format von /api/generate-prompt) ---
+
+export interface DyadPrompt {
   question: string;
   context?: string;
   category?: string;
-}
-
-export interface UserProfile {
-  name: string;
-  bio: string;
-  minutesPracticed: number;
-  sessionsCompleted: number;
-  status: 'online' | 'offline' | 'busy';
-}
-
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  time: string;
-  date: string;
-  attendees: number;
-}
-
-export interface PracticeGroup {
-  id: string;
-  name: string;
-  description: string;
-  members: number;
-  tags: string[];
 }
