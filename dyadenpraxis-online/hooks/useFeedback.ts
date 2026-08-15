@@ -147,29 +147,33 @@ export function useFeedback(): UseFeedbackReturn {
     return feedback !== null;
   }, [getMyFeedbackForSession]);
 
-  // Get rating summary for a user
+  // Get rating summary for a user (server-side aggregation via RPC)
   const getUserRatingSummary = useCallback(async (userId: string): Promise<UserRatingSummary | null> => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('session_feedback')
-        .select('structure_rating, presence_rating, overall_rating, would_practice_again')
-        .eq('rated_user_id', userId);
+      const { data, error: rpcError } = await supabase.rpc('get_user_ratings', {
+        p_user_id: userId,
+      });
 
-      if (fetchError) throw new Error(fetchError.message);
-      if (!data || data.length === 0) return null;
+      if (rpcError) throw new Error(rpcError.message);
 
-      const total = data.length;
-      const sumStructure = data.reduce((sum, f) => sum + f.structure_rating, 0);
-      const sumPresence = data.reduce((sum, f) => sum + f.presence_rating, 0);
-      const sumOverall = data.reduce((sum, f) => sum + f.overall_rating, 0);
-      const practiceAgainCount = data.filter(f => f.would_practice_again).length;
+      // PostgREST liefert RETURNS-TABLE-RPCs als Zeilen-Array
+      const row = (Array.isArray(data) ? data[0] : data) as {
+        average_rating: number | null;
+        rating_count: number | null;
+        structure_avg: number | null;
+        presence_avg: number | null;
+        overall_avg: number | null;
+        would_practice_again_percent: number | null;
+      } | null | undefined;
+
+      if (!row || !row.rating_count || row.rating_count === 0) return null;
 
       return {
-        total_reviews: total,
-        avg_structure: Math.round((sumStructure / total) * 10) / 10,
-        avg_presence: Math.round((sumPresence / total) * 10) / 10,
-        avg_overall: Math.round((sumOverall / total) * 10) / 10,
-        would_practice_again_percent: Math.round((practiceAgainCount / total) * 100),
+        total_reviews: row.rating_count,
+        avg_structure: row.structure_avg ?? 0,
+        avg_presence: row.presence_avg ?? 0,
+        avg_overall: row.overall_avg ?? 0,
+        would_practice_again_percent: row.would_practice_again_percent ?? 0,
       };
     } catch (err) {
       console.error('[useFeedback] Rating-Zusammenfassung laden fehlgeschlagen:', err);

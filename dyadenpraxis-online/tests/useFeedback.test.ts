@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useFeedback } from '../hooks/useFeedback';
-import type { SessionFeedback } from '../hooks/useFeedback';
+import type { SessionFeedback, UserRatingSummary } from '../hooks/useFeedback';
 
 const { mockRpc } = vi.hoisted(() => ({
   mockRpc: vi.fn(),
@@ -134,5 +134,58 @@ describe('useFeedback', () => {
     });
 
     expect(result.current.error).toBe('Network error');
+  });
+
+  it('getUserRatingSummary ruft get_user_ratings RPC auf und mappt Felder', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{
+        average_rating: 4.3,
+        rating_count: 12,
+        structure_avg: 4.5,
+        presence_avg: 4.2,
+        overall_avg: 4.4,
+        would_practice_again_percent: 92,
+      }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useFeedback());
+
+    let summary: UserRatingSummary | null = null;
+    await act(async () => {
+      summary = await result.current.getUserRatingSummary('partner-456');
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith('get_user_ratings', { p_user_id: 'partner-456' });
+    expect(summary).toEqual({
+      total_reviews: 12,
+      avg_structure: 4.5,
+      avg_presence: 4.2,
+      avg_overall: 4.4,
+      would_practice_again_percent: 92,
+    });
+  });
+
+  it('getUserRatingSummary liefert null bei rating_count 0', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{
+        average_rating: null,
+        rating_count: 0,
+        structure_avg: null,
+        presence_avg: null,
+        overall_avg: null,
+        would_practice_again_percent: null,
+      }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useFeedback());
+
+    let summary: UserRatingSummary | null = null;
+    await act(async () => {
+      summary = await result.current.getUserRatingSummary('partner-no-ratings');
+    });
+
+    expect(summary).toBeNull();
   });
 });
