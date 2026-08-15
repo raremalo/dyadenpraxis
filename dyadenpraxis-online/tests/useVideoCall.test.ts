@@ -30,7 +30,6 @@ describe('useVideoCall', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
     expect(typeof result.current.createRoom).toBe('function');
-    expect(typeof result.current.checkMediaPermissions).toBe('function');
   });
 
   it('createRoom ruft Supabase Edge Function auf', async () => {
@@ -104,46 +103,11 @@ describe('useVideoCall', () => {
     expect(result.current.error).toBe('Sitzung abgelaufen. Bitte Seite neu laden.');
   });
 
-  it('checkMediaPermissions gibt true bei Erfolg zurueck', async () => {
-    const mockStream = { getTracks: () => [{ stop: vi.fn() }] };
-    Object.defineProperty(navigator, 'mediaDevices', {
-      value: { getUserMedia: vi.fn().mockResolvedValue(mockStream) },
-      configurable: true,
-    });
-
-    const { result } = renderHook(() => useVideoCall());
-
-    let hasPermission = false;
-    await act(async () => {
-      hasPermission = await result.current.checkMediaPermissions();
-    });
-
-    expect(hasPermission).toBe(true);
-  });
-
-  it('checkMediaPermissions gibt false bei Fehler zurueck', async () => {
-    Object.defineProperty(navigator, 'mediaDevices', {
-      value: { getUserMedia: vi.fn().mockRejectedValue(new Error('NotAllowed')) },
-      configurable: true,
-    });
-
-    const { result } = renderHook(() => useVideoCall());
-
-    let hasPermission = true;
-    await act(async () => {
-      hasPermission = await result.current.checkMediaPermissions();
-    });
-
-    expect(hasPermission).toBe(false);
-  });
-
   it('gibt stabile Funktionsreferenzen zurueck', () => {
     const { result, rerender } = renderHook(() => useVideoCall());
 
     const firstCreateRoom = result.current.createRoom;
-    const firstCheckPermissions = result.current.checkMediaPermissions;
     rerender();
     expect(result.current.createRoom).toBe(firstCreateRoom);
-    expect(result.current.checkMediaPermissions).toBe(firstCheckPermissions);
   });
 });

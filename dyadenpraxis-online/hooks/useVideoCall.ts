@@ -16,12 +16,11 @@ interface UseVideoCallReturn {
   isLoading: boolean;
   error: string | null;
   createRoom: (sessionId: string, includeThird?: boolean) => Promise<CreateRoomResponse | null>;
-  checkMediaPermissions: () => Promise<boolean>;
 }
 
 /**
- * Reduzierter Hook: Nur noch createRoom (fuer SessionContext) und checkMediaPermissions.
- * Video-Joining, Participants, Audio/Video-Toggle werden jetzt von daily-react Hooks
+ * Reduzierter Hook: Nur noch createRoom (fuer SessionContext).
+ * Video-Joining, Participants, Audio/Video-Toggle werden von daily-react Hooks
  * direkt in VideoRoom.tsx gehandhabt.
  */
 export function useVideoCall(): UseVideoCallReturn {
@@ -91,23 +90,9 @@ export function useVideoCall(): UseVideoCallReturn {
     }
   }, [invokeCreateRoom]);
 
-  const checkMediaPermissions = useCallback(async (): Promise<boolean> => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-      stream.getTracks().forEach(t => t.stop());
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
   return {
     isLoading,
     error,
     createRoom,
-    checkMediaPermissions,
   };
 }

@@ -23,9 +23,7 @@ const formatSessionTime = (seconds: number) => {
 const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
   const {
     currentSession,
-    isInSession,
     isRequester,
-    isThirdParticipant,
     startVideoSession,
     endSession,
     cancelCurrentSession,
@@ -96,12 +94,6 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
     .join('')
     .toUpperCase()
     .slice(0, 2) || '?';
-
-  const videoRole: 'requester' | 'partner' | 'third' = isThirdParticipant
-    ? 'third'
-    : isRequester
-    ? 'requester'
-    : 'partner';
 
   // Auto-show video when ready
   useEffect(() => {
@@ -438,8 +430,6 @@ const ActiveSession: React.FC<ActiveSessionProps> = ({ onClose }) => {
         {/* Video */}
         <div className="h-[calc(100vh-200px)] min-h-[400px]">
           <VideoRoom
-            sessionId={currentSession.id}
-            role={videoRole}
             roomUrl={videoRoomUrl}
             meetingToken={videoToken}
             onLeave={handleEndSession}

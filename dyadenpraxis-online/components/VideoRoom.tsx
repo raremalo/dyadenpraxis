@@ -23,8 +23,6 @@ import VideoSettingsPanel from './VideoRoom/VideoSettingsPanel';
 import VideoControls from './VideoRoom/VideoControls';
 
 interface VideoRoomProps {
-  sessionId: string;
-  role: 'requester' | 'partner' | 'third';
   roomUrl: string;
   meetingToken: string;
   onLeave?: () => void;
