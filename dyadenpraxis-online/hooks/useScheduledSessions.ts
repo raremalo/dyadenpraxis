@@ -3,6 +3,16 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+/**
+ * Single source of truth für das ScheduledSession-Select mit Partner-Profilen.
+ * Bewusst schlanker als das Session-Select in useSession.ts (kein trust_level/is_online).
+ */
+const SCHEDULED_SESSION_WITH_PARTNERS_SELECT = `
+          *,
+          requester:profiles!requester_id(id, name, avatar_url),
+          partner:profiles!partner_id(id, name, avatar_url)
+        ` as const;
+
 export type ScheduledSessionStatus = 'proposed' | 'scheduled' | 'cancelled' | 'completed' | 'rejected';
 
 export interface ScheduledSessionPartner {
@@ -85,11 +95,7 @@ export function useScheduledSessions(): UseScheduledSessionsReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from('scheduled_sessions')
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url),
-          partner:profiles!partner_id(id, name, avatar_url)
-        `)
+        .select(SCHEDULED_SESSION_WITH_PARTNERS_SELECT)
         .or(`requester_id.eq.${user.id},partner_id.eq.${user.id}`)
         .order('scheduled_for', { ascending: true });
 
@@ -126,11 +132,7 @@ export function useScheduledSessions(): UseScheduledSessionsReturn {
           message: input.message || null,
           pending_response_from: input.partner_id,
         })
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url),
-          partner:profiles!partner_id(id, name, avatar_url)
-        `)
+        .select(SCHEDULED_SESSION_WITH_PARTNERS_SELECT)
         .single();
 
       if (insertError) throw new Error(insertError.message);
@@ -263,11 +265,7 @@ export function useScheduledSessions(): UseScheduledSessionsReturn {
               // Fetch with profiles
               const { data } = await supabase
                 .from('scheduled_sessions')
-                .select(`
-                  *,
-                  requester:profiles!requester_id(id, name, avatar_url),
-                  partner:profiles!partner_id(id, name, avatar_url)
-                `)
+                .select(SCHEDULED_SESSION_WITH_PARTNERS_SELECT)
                 .eq('id', newSession.id)
                 .single();
               

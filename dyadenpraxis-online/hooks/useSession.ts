@@ -2,6 +2,17 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * Single source of truth für das Session-Select mit Partner-Profilen.
+ * Verhindert Drift zwischen loadSessions, startSession, startTriadSession, getSession.
+ * (loadOpenTriads nutzt bewusst ein eigenes, schlankeres Select — siehe dort.)
+ */
+const SESSION_WITH_PARTNERS_SELECT = `
+          *,
+          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
+          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
+        ` as const;
+
 export type SessionStatus = 'pending' | 'accepted' | 'active' | 'completed' | 'cancelled';
 
 export interface SessionPartner {
@@ -107,11 +118,7 @@ export function useSession(): UseSessionReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from('sessions')
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
-          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
-        `)
+        .select(SESSION_WITH_PARTNERS_SELECT)
         .or(`requester_id.eq.${user.id},partner_id.eq.${user.id},third_participant_id.eq.${user.id}`)
         .eq('deleted_by_requester', false)
         .eq('deleted_by_partner', false)
@@ -240,11 +247,7 @@ export function useSession(): UseSessionReturn {
         })
         .eq('id', sessionId)
         .eq('requester_id', user.id)  // ownership filter (defense-in-depth)
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
-          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
-        `)
+        .select(SESSION_WITH_PARTNERS_SELECT)
         .single();
 
       if (updateError) throw new Error(updateError.message);
@@ -470,11 +473,7 @@ export function useSession(): UseSessionReturn {
         })
         .eq('id', sessionId)
         .eq('requester_id', user.id)  // ownership filter (defense-in-depth)
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
-          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
-        `)
+        .select(SESSION_WITH_PARTNERS_SELECT)
         .single();
 
       if (updateError) throw new Error(updateError.message);
@@ -495,11 +494,7 @@ export function useSession(): UseSessionReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from('sessions')
-        .select(`
-          *,
-          requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
-          partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
-        `)
+        .select(SESSION_WITH_PARTNERS_SELECT)
         .eq('id', sessionId)
         .single();
 
