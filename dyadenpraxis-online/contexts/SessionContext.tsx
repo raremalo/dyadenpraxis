@@ -52,7 +52,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     error: sessionError,
   } = useSession();
 
-  const { createRoom, isLoading: videoLoading } = useVideoCall();
+  const { createRoom, isLoading: videoLoading, error: videoError } = useVideoCall();
 
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
@@ -209,7 +209,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
       videoRoomUrl,
       videoToken,
       isLoading: sessionLoading || videoLoading,
-      error: sessionError,
+      error: sessionError || videoError,
     }}>
       {children}
     </SessionContext.Provider>
