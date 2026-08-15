@@ -5,7 +5,7 @@ import { verifyJWT } from './_lib/auth.js';
 
 // Supabase Admin Client (Service Role)
 const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -43,8 +43,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Passwort ueber Supabasae Auth verifizieren (normaler Client, nicht Admin)
     const supabaseAuth = createClient(
-      process.env.VITE_SUPABASE_URL!,
-      process.env.VITE_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!
     );
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
     const userEmail = userData.user?.email;
