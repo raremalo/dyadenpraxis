@@ -8,7 +8,8 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useCheckSessionLimit } from '../hooks/useCheckSessionLimit';
-import { usePartnerSearch, Partner } from '../hooks/usePartnerSearch';
+import { usePartnerSearch } from '../hooks/usePartnerSearch';
+import type { Partner } from '../types';
 
 interface PartnerConnectProps {
   onConnected: () => void;

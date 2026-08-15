@@ -1,7 +1,6 @@
 import React from 'react';
 import { MessageCircle, Clock } from 'lucide-react';
-import { Partner } from '../hooks/usePartnerSearch';
-import type { TrustLevel } from '../types';
+import type { Partner, TrustLevel } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
 import TrustBadgeComponent from './TrustBadge';

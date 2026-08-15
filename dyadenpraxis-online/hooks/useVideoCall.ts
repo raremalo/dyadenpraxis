@@ -1,16 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-
-interface RoomTokens {
-  requester: string;
-  partner: string;
-  third: string | null;
-}
-
-export interface CreateRoomResponse {
-  roomUrl: string;
-  tokens: RoomTokens;
-}
+import type { CreateRoomResponse } from '../types';
 
 interface UseVideoCallReturn {
   isLoading: boolean;

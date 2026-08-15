@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { Session, OpenTriad, useSession } from '../hooks/useSession';
+import { useSession } from '../hooks/useSession';
+import type { Session, OpenTriad } from '../types';
 import { useVideoCall } from '../hooks/useVideoCall';
 
 interface SessionContextType {

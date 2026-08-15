@@ -3,7 +3,8 @@ import { X, Check, Clock, Zap, User } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useSession, type Session } from '../hooks/useSession';
+import { useSession } from '../hooks/useSession';
+import type { Session } from '../types';
 
 interface SessionInviteBannerProps {
   onAccepted?: () => void;

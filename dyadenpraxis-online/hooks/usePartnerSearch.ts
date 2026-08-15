@@ -1,29 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { TrustLevel } from '../types';
-
-export interface Partner {
-  id: string;
-  name: string;
-  avatar_url: string | null;
-  bio: string | null;
-  trust_level: TrustLevel;
-  confirmations: number;
-  is_online: boolean;
-  is_available?: boolean;
-  preferred_levels: number[];
-  preferred_duration: number;
-  sessions_completed: number;
-  compliance_rate: number;
-  em_experience_months?: number;
-  updated_at: string;
-  similarity_score?: number;
-  total_count?: number;
-  match_score?: number;
-  match_reasons?: string[];
-  last_session_at?: string;
-}
+import type { TrustLevel, Partner } from '../types';
 
 export interface SearchFilters {
   searchTerm: string;

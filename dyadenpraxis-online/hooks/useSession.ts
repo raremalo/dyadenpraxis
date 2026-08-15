@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import type { Session, SessionStatus, OpenSession, OpenTriad } from '../types';
 
 /**
  * Single source of truth für das Session-Select mit Partner-Profilen.
@@ -12,65 +13,6 @@ const SESSION_WITH_PARTNERS_SELECT = `
           requester:profiles!requester_id(id, name, avatar_url, trust_level, is_online),
           partner:profiles!partner_id(id, name, avatar_url, trust_level, is_online)
         ` as const;
-
-export type SessionStatus = 'pending' | 'accepted' | 'active' | 'completed' | 'cancelled';
-
-export interface SessionPartner {
-  id: string;
-  name: string;
-  avatar_url: string | null;
-  trust_level: 'new' | 'known' | 'verified';
-  is_online: boolean;
-}
-
-export interface Session {
-  id: string;
-  created_at: string;
-  requester_id: string;
-  partner_id: string;
-  level: number;
-  duration: number;
-  scheduled_at: string | null;
-  started_at: string | null;
-  ended_at: string | null;
-  status: SessionStatus;
-  room_url: string | null;
-  room_token: string | null;
-  partner_token: string | null;
-  is_open: boolean;
-  third_participant_id: string | null;
-  third_participant_token: string | null;
-  deleted_by_requester: boolean;
-  deleted_by_partner: boolean;
-  requester?: SessionPartner;
-  partner?: SessionPartner;
-}
-
-export interface OpenSession {
-  id: string;
-  created_at: string;
-  requester_id: string;
-  requester_name: string;
-  requester_avatar: string | null;
-  level: number;
-  duration: number;
-  scheduled_at: string | null;
-  status: SessionStatus;
-}
-
-export interface OpenTriad {
-  id: string;
-  created_at: string;
-  requester_id: string;
-  partner_id: string;
-  requester_name: string;
-  requester_avatar: string | null;
-  partner_name: string;
-  partner_avatar: string | null;
-  level: number;
-  duration: number;
-  status: SessionStatus;
-}
 
 interface CreateSessionParams {
   partnerId: string;
