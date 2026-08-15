@@ -6,7 +6,7 @@ import AppNavigation from './components/AppNavigation';
 import AuthView from './components/auth/AuthView';
 import ErrorBoundary from './components/ErrorBoundary';
 import CategoryPicker from './components/CategoryPicker';
-import { fetchDyadPrompt } from './services/geminiService';
+import { fetchDyadPrompt } from './services/promptService';
 import { getRandomQuestion } from './data/dyadQuestions';
 import type { DyadPrompt } from './types';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';

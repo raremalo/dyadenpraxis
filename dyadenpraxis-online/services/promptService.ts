@@ -1,3 +1,8 @@
+/**
+ * Prompt-Fetching für Dyaden-Fragen: ruft /api/generate-prompt auf und fällt
+ * bei Fehler/Timeout auf den lokalen Fragen-Katalog zurück (data/dyadQuestions).
+ * Kein Gemini-Direktaufruf — die API-Route hält den Provider (L1-03).
+ */
 import { DyadPrompt } from "../types";
 import { getRandomQuestion, DYAD_CATEGORIES } from '../data/dyadQuestions';
 import { supabase } from '../lib/supabase';
@@ -16,6 +21,11 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<DyadPrompt>
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
+    // Abort-Deckung auch für die Auth-Phase: supabase-js nimmt kein Signal an —
+    // daher post-await Check; der fetch selbst ist nativ signal-gedeckt (L1-04).
+    if (controller.signal.aborted) {
+      throw new Error('Prompt-Anfrage abgebrochen (Timeout)');
+    }
     if (!session?.access_token) {
       throw new Error('Nicht angemeldet');
     }
@@ -38,8 +48,7 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<DyadPrompt>
     return data;
 
   } catch (error) {
-    clearTimeout(timeoutId);
-    console.error('[GeminiService] Prompt abrufen fehlgeschlagen:', error instanceof Error ? error.message : "Unknown error");
+    console.error('[PromptService] Prompt abrufen fehlgeschlagen:', error instanceof Error ? error.message : "Unknown error");
     // Fallback to local pool
     const fallback = getRandomQuestion(categoryKey);
     return {
@@ -47,5 +56,7 @@ export const fetchDyadPrompt = async (categoryKey?: string): Promise<DyadPrompt>
       context: "Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?",
       category: fallback.category,
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 };

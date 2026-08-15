@@ -5,7 +5,7 @@ import { useSessionContext } from '../contexts/SessionContext';
 import { useAuth } from '../contexts/AuthContext';
 import VideoRoom from './VideoRoom';
 import DyadTimer from './DyadTimer';
-import { fetchDyadPrompt } from '../services/geminiService';
+import { fetchDyadPrompt } from '../services/promptService';
 import { useDyadTimerEngine, calcTotalSeconds } from '../hooks/useDyadTimerEngine';
 import { DyadRole } from '../types';
 
