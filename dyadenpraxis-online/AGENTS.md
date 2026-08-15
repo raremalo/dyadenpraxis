@@ -73,7 +73,6 @@ npx vitest run          # Unit tests must pass
 - `@supabase/supabase-js` 2 — Backend client
 - `@daily-co/daily-js`, `@daily-co/daily-react` — Video calling
 - `@google/genai` — Gemini AI for prompt generation
-- `@tanstack/react-query` 5 — Server state management
 - `lucide-react` — Icons
 - `jose` — JWT handling
 - `tailwindcss` 4 — Styling

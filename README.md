@@ -22,7 +22,6 @@ Online-Anwendung fuer Dyaden-Meditation und kontemplative Zwiegespraeche. Die Ap
 | Frontend | React 19, TypeScript 5.8, Vite 6 |
 | Styling | Tailwind CSS 4 |
 | Routing | React Router 7 |
-| State / Fetching | TanStack React Query 5 |
 | Authentifizierung | Supabase Auth |
 | Datenbank | Supabase (PostgreSQL + Realtime) |
 | Video | Daily.co (`@daily-co/daily-js`, `@daily-co/daily-react`) |

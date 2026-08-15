@@ -57,6 +57,5 @@ Custom React hooks — the business logic layer of the application. Each hook en
 ### External
 - `@supabase/supabase-js` — Database, auth, realtime, storage
 - `@daily-co/daily-react` — Video call hooks (useVideoCall)
-- `@tanstack/react-query` — Server state caching
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

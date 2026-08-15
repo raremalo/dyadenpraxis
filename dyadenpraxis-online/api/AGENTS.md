@@ -4,7 +4,7 @@
 # api
 
 ## Purpose
-Vercel serverless API routes (Node.js runtime). Handle server-side operations that require secrets or elevated permissions — room creation, push notifications, AI prompt generation, and account deletion.
+Vercel serverless API routes (Node.js runtime). Handle server-side operations that require secrets or elevated permissions — room creation, AI prompt generation, and account deletion.
 
 ## Key Files
 
@@ -13,7 +13,6 @@ Vercel serverless API routes (Node.js runtime). Handle server-side operations th
 | `create-room.ts` | Creates a Daily.co video room — called when two partners match |
 | `delete-account.ts` | Handles GDPR-compliant account deletion via Supabase Admin |
 | `generate-prompt.ts` | Generates AI dyad prompts via Google Gemini — with category filtering |
-| `send-push.ts` | Sends web push notifications for session invitations |
 
 ## For AI Agents
 
@@ -39,7 +38,6 @@ Vercel serverless API routes (Node.js runtime). Handle server-side operations th
 ### Internal
 - Called from `../services/geminiService.ts` (generate-prompt)
 - Called from `../hooks/useVideoCall.ts` (create-room)
-- Called from `../hooks/usePushNotifications.ts` (send-push)
 
 ### External
 - `@vercel/node` — Request/response types
