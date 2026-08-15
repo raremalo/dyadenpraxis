@@ -196,18 +196,7 @@ const AppContent: React.FC = () => {
                   </Suspense>
                 </ErrorBoundary>
               } />
-              <Route path="/session" element={
-                <ErrorBoundary
-                  fallbackTitle="Session-Fehler"
-                  fallbackMessage="Die Session wurde unterbrochen. Bitte starte eine neue Session."
-                  onReset={() => navigate('/')}
-                >
-                  <Suspense fallback={<RouteFallback />}>
-                    <ActiveSession onClose={() => navigate('/')} />
-                  </Suspense>
-                </ErrorBoundary>
-              } />
-              <Route path="/session/:sessionId" element={
+              <Route path="/session/:sessionId?" element={
                 <ErrorBoundary
                   fallbackTitle="Session-Fehler"
                   fallbackMessage="Die Session wurde unterbrochen. Bitte starte eine neue Session."
