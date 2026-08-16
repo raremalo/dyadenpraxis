@@ -1,59 +1,30 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { setCorsHeaders } from './_lib/cors.js';
 import { verifyJWT } from './_lib/auth.js';
+import { DYAD_CATEGORIES, type DyadCategory } from '../shared/categories.js';
+import type { DyadPrompt } from '../types.js';
 
-// Valid category keys (allowlist)
-const VALID_CATEGORY_KEYS = new Set([
-  'existenziell', 'praesenz', 'mitgefuehl', 'emotionen',
-  'selbsterforschung', 'stress', 'perspektiven', 'beduerfnisse',
-  'beziehungen', 'moeglichkeiten',
-]);
+// Kanonischer Katalog aus shared/categories.ts (L5-01 — vorher gedriftete Inline-Kopie)
+const VALID_CATEGORY_KEYS = new Set(DYAD_CATEGORIES.map(c => c.key));
+const CATEGORY_KEYS = DYAD_CATEGORIES.map(c => c.key);
+const CATEGORY_BY_KEY = new Map(DYAD_CATEGORIES.map(c => [c.key, c]));
 
-// Inline category data for server-side prompt building
-const CATEGORIES: Record<string, { name: string; questions: string[] }> = {
-  existenziell: {
-    name: 'Existenziell',
-    questions: ['Wer bin ich?', 'Was bin ich?', 'Was ist Leben?', 'Was ist ein Anderer?', 'Was ist Liebe?'],
-  },
-  praesenz: {
-    name: 'Präsenz & Achtsamkeit',
-    questions: ['Dich öffnen und beobachten, was nimmst du wahr?', 'Präsent sein mit allem was ist, was erlebst du jetzt?', 'Was ist in dir gerade lebendig?', 'Was nimmst du in diesem Moment in deinem Körper wahr?'],
-  },
-  mitgefuehl: {
-    name: 'Mitgefühl & Verbindung',
-    questions: ['Das Leben in dir umarmen, was nimmst du wahr?', 'Was bedeutet Mitgefühl für dich in diesem Moment?', 'Wofür bist du heute dankbar?'],
-  },
-  emotionen: {
-    name: 'Emotionen & Gefühle',
-    questions: ['Welche Emotion nimmst du gerade in dir wahr?', 'Was brauchst du gerade emotional?', 'Welches Gefühl möchte gerade gesehen werden?'],
-  },
-  selbsterforschung: {
-    name: 'Selbsterforschung',
-    questions: ['Was ist deine tiefste Wahrheit in diesem Moment?', 'Welche Überzeugung hält dich gerade fest?', 'Welcher Teil von dir möchte gehört werden?'],
-  },
-  stress: {
-    name: 'Stress & Herausforderungen',
-    questions: ['Wie reagiert dein Körper auf Stress?', 'Was brauchst du, um mit Stress besser umzugehen?', 'Was ist deine größte Herausforderung gerade?'],
-  },
-  perspektiven: {
-    name: 'Perspektiven & Wachstum',
-    questions: ['Welche neue Perspektive möchte sich zeigen?', 'Welcher nächste Schritt möchte gegangen werden?', 'Welche Unterstützung brauchst du für dein Wachstum?'],
-  },
-  beduerfnisse: {
-    name: 'Bedürfnisse & Wünsche',
-    questions: ['Was brauchst du wirklich in deinem Leben?', 'Was ist deine tiefste Sehnsucht?', 'Wonach sehnt sich das Leben in dir in diesem Moment?'],
-  },
-  beziehungen: {
-    name: 'Beziehungen & Gemeinschaft',
-    questions: ['Wie erlebst du Verbindung zu anderen?', 'Was bedeutet Gemeinschaft für dich?', 'Was hindert dich daran, dich wirklich zu zeigen?'],
-  },
-  moeglichkeiten: {
-    name: 'Möglichkeiten & Zukunft',
-    questions: ['Welche Vision möchte sich durch dich verwirklichen?', 'Was möchte in der Welt durch dich entstehen?', 'Wie sähe dein ideales Leben aus?'],
-  },
-};
+function getCategory(key: string): DyadCategory {
+  const cat = CATEGORY_BY_KEY.get(key);
+  if (!cat) throw new Error(`Unknown category: ${key}`);
+  return cat;
+}
 
-const CATEGORY_KEYS = Object.keys(CATEGORIES);
+function pickRandomKey(): string {
+  return CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
+}
+
+/** Kuratierte Fallback-Antwort (L5-03: respektiert die gewählte Kategorie). */
+const fallbackPrompt = (cat: DyadCategory): DyadPrompt => ({
+  question: cat.questions[Math.floor(Math.random() * cat.questions.length)],
+  context: 'Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?',
+  category: cat.name,
+});
 
 // Rate limiting: simple in-memory per-IP (resets on cold start)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -93,19 +64,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many requests' });
   }
 
+  // categoryKey EINMAL außerhalb des try sanitizen — die Fallback-Pfade
+  // (No-API-Key, catch) brauchen ihn ebenfalls (L5-03).
+  const { categoryKey: rawCategoryKey } = req.body || {};
+  const sanitizedCategoryKey =
+    rawCategoryKey && VALID_CATEGORY_KEYS.has(rawCategoryKey) ? rawCategoryKey : undefined;
+
   try {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-    let { categoryKey } = req.body || {};
-
-    // Validate categoryKey against allowlist
-    if (categoryKey && !VALID_CATEGORY_KEYS.has(categoryKey)) {
-      categoryKey = undefined;
-    }
-
     // Pick category
-    const key = categoryKey || CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
-    const category = CATEGORIES[key];
+    const key = sanitizedCategoryKey || pickRandomKey();
+    const category = getCategory(key);
 
     // Shuffle and pick 3 examples
     const shuffled = [...category.questions].sort(() => Math.random() - 0.5);
@@ -131,14 +101,7 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
 
     // Skip Gemini if no API key configured (graceful fallback to curated questions)
     if (!GEMINI_API_KEY) {
-      const key = CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
-      const cat = CATEGORIES[key];
-      const q = cat.questions[Math.floor(Math.random() * cat.questions.length)];
-      return res.status(200).json({
-        question: q,
-        context: 'Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?',
-        category: cat.name,
-      });
+      return res.status(200).json(fallbackPrompt(category));
     }
 
     // Call Gemini API via REST — API key in header (not URL) to prevent log leakage
@@ -157,7 +120,7 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
           responseSchema: {
             type: 'OBJECT',
             properties: {
-              question: { type: 'STRING', description: 'Die neue Dyaden-Frage' },
+              question: { type: 'STRING', description: 'Die neue Dyadenfrage' },
               context: { type: 'STRING', description: 'Eine sanfte, kurze Anweisung zur Kontemplation' },
               category: { type: 'STRING', description: 'Die Kategorie der Frage' },
             },
@@ -179,7 +142,7 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
     const parsed = JSON.parse(text);
 
     // Truncate and sanitize response
-    const result = {
+    const result: DyadPrompt = {
       question: (parsed.question || '').slice(0, 300),
       context: (parsed.context || '').slice(0, 500),
       category: parsed.category || category.name,
@@ -188,15 +151,7 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
     return res.status(200).json(result);
 
   } catch (error) {
-    // Fallback: return a random curated question
-    const key = CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
-    const cat = CATEGORIES[key];
-    const q = cat.questions[Math.floor(Math.random() * cat.questions.length)];
-
-    return res.status(200).json({
-      question: q,
-      context: 'Atme tief ein und spüre in dich hinein. Was ist jetzt gerade wahr?',
-      category: cat.name,
-    });
+    // Fallback: kuratierte Frage — L5-03: respektiert sanitizedCategoryKey
+    return res.status(200).json(fallbackPrompt(getCategory(sanitizedCategoryKey || pickRandomKey())));
   }
 }
