@@ -36,12 +36,13 @@ Vercel serverless API routes (Node.js runtime). Handle server-side operations th
 ## Dependencies
 
 ### Internal
-- Called from `../services/geminiService.ts` (generate-prompt)
+- Called from `../services/promptService.ts` (generate-prompt)
 - Called from `../hooks/useVideoCall.ts` (create-room)
+- Question catalog imported from `../shared/categories.js` (generate-prompt; `.js` suffix per bundler convention)
 
 ### External
 - `@vercel/node` — Request/response types
-- `@google/genai` — Gemini AI (generate-prompt)
+- Google Gemini REST API — Prompt generation (generate-prompt; direct REST call, no SDK)
 - `@supabase/supabase-js` — Admin client for account deletion
 - Daily.co REST API — Room creation
 

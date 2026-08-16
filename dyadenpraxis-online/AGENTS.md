@@ -13,7 +13,7 @@ Main application directory — a Vite-powered React 19 SPA for online dyad medit
 | `App.tsx` | Root component — BrowserRouter, auth guard, lazy-loaded routes, context providers |
 | `index.tsx` | Entry point — renders App into DOM |
 | `index.html` | HTML shell with Vite entry |
-| `types.ts` | Shared TypeScript types — AppView, DyadRole, DyadConfig, GongTimer types, UserProfile |
+| `types.ts` | Shared domain types — DyadRole/DyadConfig, Gong timer types, TrustLevel, DbUserProfile, DyadPrompt, Session/Partner/Room vocabulary |
 | `translations.ts` | i18n strings (German/English) used via `useSettings().t` |
 | `metadata.json` | App metadata |
 | `package.json` | Dependencies and scripts (`dev`, `build`, `test`) |
@@ -72,7 +72,6 @@ npx vitest run          # Unit tests must pass
 - `react-router-dom` 7 — Client-side routing
 - `@supabase/supabase-js` 2 — Backend client
 - `@daily-co/daily-js`, `@daily-co/daily-react` — Video calling
-- `@google/genai` — Gemini AI for prompt generation
 - `lucide-react` — Icons
 - `jose` — JWT handling
 - `tailwindcss` 4 — Styling

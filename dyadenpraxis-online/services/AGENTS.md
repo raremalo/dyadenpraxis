@@ -10,7 +10,7 @@ Service adapters for external APIs. Abstracts API calls behind clean async funct
 
 | File | Description |
 |------|-------------|
-| `geminiService.ts` | Fetches AI-generated dyad prompts via `/api/generate-prompt` — validates category keys against allowlist, falls back to local question pool on error |
+| `promptService.ts` | Fetches AI-generated dyad prompts via `/api/generate-prompt` — validates category keys against allowlist, falls back to local question pool on error |
 
 ## For AI Agents
 
@@ -18,7 +18,8 @@ Service adapters for external APIs. Abstracts API calls behind clean async funct
 - Services call Vercel API routes (not external APIs directly from the browser)
 - Always include error handling with meaningful fallbacks
 - Validate input against allowlists before sending to API
-- Category keys must stay in sync with `../data/dyadQuestions.ts`
+- The category catalog is single-sourced in `../shared/categories.ts` — no manual key sync needed
+- Authenticated API calls go through `../lib/apiFetch.ts` (`apiFetch`)
 
 ### Testing Requirements
 - `npx tsc --noEmit` must pass
@@ -26,8 +27,9 @@ Service adapters for external APIs. Abstracts API calls behind clean async funct
 ## Dependencies
 
 ### Internal
-- `../types.ts` — `PromptResponse` type
+- `../types.ts` — `DyadPrompt` type
 - `../data/dyadQuestions.ts` — `getRandomQuestion`, `DYAD_CATEGORIES` (fallback + validation)
+- `../lib/apiFetch.ts` — `apiFetch` (authenticated fetch helper)
 
 ### External
 - Calls `/api/generate-prompt` (Vercel serverless function)

@@ -4,13 +4,14 @@
 # lib
 
 ## Purpose
-Library initialization and shared client instances. Currently contains the singleton Supabase client used throughout the app.
+Library initialization and shared client instances. Currently contains the singleton Supabase client and the authenticated API-fetch helper (`apiFetch`) used throughout the app.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
 | `supabase.ts` | Creates and exports the Supabase client using `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars |
+| `apiFetch.ts` | Authenticated fetch helper for Vercel API routes — adds Supabase session token, throws with server error on !ok |
 
 ## For AI Agents
 
