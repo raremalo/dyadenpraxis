@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { apiFetch } from '../lib/apiFetch';
 
 interface UseAccountDeletionReturn {
   isDeleting: boolean;
@@ -21,25 +22,10 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setError('Nicht angemeldet');
-        return false;
-      }
-
-      const response = await fetch('/api/delete-account', {
+      await apiFetch('/api/delete-account', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ password }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Account-Loeschung fehlgeschlagen');
-      }
 
       // Sign out lokal nach erfolgreicher Server-Loeschung
       await supabase.auth.signOut();
