@@ -1,7 +1,7 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-
 interface ErrorFallbackProps {
   error: Error;
   resetErrorBoundary: () => void;
@@ -82,7 +82,11 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
 }) => {
   const handleError = (error: unknown, info: React.ErrorInfo) => {
     console.error('[ErrorBoundary] Fehler gefangen:', error);
-    console.error('[ErrorBoundary] Component Stack:', info.componentStack);
+    // No-Op ohne initialisiertes Sentry. Component-Stack enthält nur
+    // Komponentennamen-Hierarchie — keine Props/Inhalte (PII-safe).
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: info.componentStack } },
+    });
   };
 
   return (

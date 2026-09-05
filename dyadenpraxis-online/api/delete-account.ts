@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { setCorsHeaders } from './_lib/cors.js';
 import { verifyJWT } from './_lib/auth.js';
+import { reportError } from './_sentry.js';
 
 // Supabase Admin Client (Service Role)
 const supabaseAdmin = createClient(
@@ -90,15 +91,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. Auth User loeschen - kaskadiert zu profiles -> alle abhaengigen Tabellen
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
     if (deleteError) {
       console.error('[DeleteAccount] Account-Loeschung fehlgeschlagen:', deleteError);
+      await reportError(deleteError, { handler: 'delete-account', step: 'delete-user' });
       return res.status(500).json({ error: 'Account-Loeschung fehlgeschlagen' });
     }
 
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('[DeleteAccount] Account-Loeschung fehlgeschlagen:', error);
+    await reportError(error, { handler: 'delete-account' });
     return res.status(500).json({ error: 'Account-Loeschung fehlgeschlagen' });
   }
 }

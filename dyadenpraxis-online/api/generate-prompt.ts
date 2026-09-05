@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { setCorsHeaders } from './_lib/cors.js';
 import { verifyJWT } from './_lib/auth.js';
+import { reportError } from './_sentry.js';
 import { DYAD_CATEGORIES, type DyadCategory } from '../shared/categories.js';
 import type { DyadPrompt } from '../types.js';
 
@@ -151,7 +152,10 @@ Die Kategorie der Antwort soll "${category.name}" sein.`;
     return res.status(200).json(result);
 
   } catch (error) {
-    // Fallback: kuratierte Frage — L5-03: respektiert sanitizedCategoryKey
+    // Fallback: kuratierte Frage — L5-03: respektiert sanitizedCategoryKey.
+    // Non-fatal: Nutzer bekommt eine gültige Antwort, deshalb Best-Effort-
+    // Reporting (flushMs 0) ohne Sentry-Wartezeit im Response-Pfad.
+    await reportError(error, { handler: 'generate-prompt' }, { level: 'warning', flushMs: 0 });
     return res.status(200).json(fallbackPrompt(getCategory(sanitizedCategoryKey || pickRandomKey())));
   }
 }

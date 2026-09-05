@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { syncSentryUser } from '../lib/sentry';
 import type { User, Session } from '@supabase/supabase-js';
 import { usePresence } from '../hooks/usePresence';
 import type { DbUserProfile } from '../types';
@@ -38,6 +39,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Supabase Presence: Live-Online-Status tracking
   const { onlineUserIds } = usePresence(user?.id);
+
+  // Pseudonymer Sentry-Kontext: NUR die UUID (kein Name, keine E-Mail),
+  // null räumt den Kontext (Logout). No-Op ohne initialisiertes Sentry.
+  useEffect(() => {
+    syncSentryUser(user ? { id: user.id } : null);
+  }, [user?.id]);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
