@@ -58,3 +58,7 @@ supabase/.temp/
 .rpiv/
 .zap/
 thoughts/
+
+# Playwright / E2E
+playwright-report/
+test-results/

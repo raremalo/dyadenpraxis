@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least Privilege: der Job liest nur und lädt ein Artifact hoch
+permissions:
+  contents: read
+
+# Schnelle Hintereinander-Pushes cancelen die veralteten Läufe ab
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dyadenpraxis-online
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dyadenpraxis-online/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit-Tests
+        run: npx vitest run
+
+      - name: Produktions-Build
+        run: npx vite build
+
+      # Playwright-Browser-Binaries cachen (Key an package-lock gekoppelt;
+      # restore-keys halten den Cache bei Dep-Bumps teilweise am Leben)
+      - name: Playwright-Browser-Cache
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('dyadenpraxis-online/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      # System-Bibliotheken IMMER installieren: apt-Pakete leben im Runner-
+      # Image, nicht im Browser-Cache — ein Image-Refresh ohne diesen Schritt
+      # liefe gegen fehlende libs.
+      - name: Chromium-Systemabhängigkeiten installieren
+        run: npx playwright install-deps chromium
+
+      - name: Chromium herunterladen
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      # E2E läuft offline-deterministisch gegen Dummy-Env-Dev-Server
+      # (playwright.config.ts webServer.env) — keine Secrets nötig.
+      - name: E2E-Tests
+        run: npx playwright test
+
+      - name: Playwright-Report bei Fehler hochladen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: dyadenpraxis-online/playwright-report/
+          retention-days: 7
